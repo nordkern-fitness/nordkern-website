@@ -16,6 +16,7 @@
   <link rel="icon" type="image/png" sizes="512x512" href="images/icon-512.png?v=3" />
   <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png?v=3" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/nordkern-brand.css" />
 
   <style>
     .pricing-page-v3 {
@@ -709,8 +710,8 @@
         <h1 id="pricing-page-title">Wähle deinen Tarif.</h1>
 
         <p>
-          Basic, Plus, Pro, Tagespass oder Urlaubspass. Alles läuft digital über die Nordkern Fitness App:
-          buchen, verwalten, QR-Code öffnen und trainieren.
+          Basic, Plus, Pro sowie Tages- und Urlaubspässe: aktuelle Konditionen aus unserem Nordkern-Katalog.
+          Die digitale Buchung über die App ist noch in Entwicklung.
         </p>
       </div>
     </section>
@@ -718,36 +719,13 @@
     <section class="pricing-section-v3" aria-label="Nordkern Fitness Tarife">
       <div class="pricing-stage-v3">
         <div class="pricing-tabs-wrap-v3">
-          <div class="pricing-tabs" role="tablist" aria-label="Tarife auswählen">
-            <button class="pricing-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="plan-basic" id="tab-basic" data-plan="basic">
-              Basic
-            </button>
-
-            <button class="pricing-tab-button" type="button" role="tab" aria-selected="false" aria-controls="plan-plus" id="tab-plus" data-plan="plus">
-              Plus
-            </button>
-
-            <button class="pricing-tab-button" type="button" role="tab" aria-selected="false" aria-controls="plan-pro" id="tab-pro" data-plan="pro">
-              Pro
-            </button>
-
-            <button class="pricing-tab-button" type="button" role="tab" aria-selected="false" aria-controls="plan-tagespass" id="tab-tagespass" data-plan="tagespass">
-              Tagespass
-            </button>
-
-            <button class="pricing-tab-button" type="button" role="tab" aria-selected="false" aria-controls="plan-urlaubspass" id="tab-urlaubspass" data-plan="urlaubspass">
-              Urlaubspass
-            </button>
-          </div>
+          <p class="pricing-catalog-status" data-catalog-status role="status" aria-live="polite">
+            Veröffentlichte Tarife werden geladen …
+          </p>
+          <div class="pricing-tabs" role="tablist" aria-label="Tarife auswählen" aria-busy="true"></div>
         </div>
 
-        <div class="pricing-panels-v3">
-          <div data-tarif-basic></div>
-          <div data-tarif-plus></div>
-          <div data-tarif-pro></div>
-          <div data-tarif-tagespass></div>
-          <div data-tarif-urlaubspass></div>
-        </div>
+        <div class="pricing-panels-v3" data-catalog-panels aria-busy="true"></div>
       </div>
     </section>
 
@@ -780,6 +758,7 @@
 
   <div data-footer></div>
 
+  <script src="js/catalog.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

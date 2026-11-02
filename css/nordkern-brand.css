@@ -1,0 +1,110 @@
+/* Nordkern FDS – shared visual language (80% calm/minimal, 20% sport).
+   Website keeps its own responsive layout while matching the app brand. */
+:root {
+  --nf-green: #198d40;
+  --nf-green-dark: #126b30;
+  --nf-green-light: #52c77a;
+  --nf-green-soft: rgba(25, 141, 64, 0.10);
+  --nf-green-line: rgba(25, 141, 64, 0.18);
+  --bg-soft: #f7f8f6;
+  --bg-soft-2: #fafbf9;
+  --surface: #f7f8f6;
+  --text: #171a19;
+  --text-soft: #505b54;
+  --muted: #69716d;
+  --line: rgba(23, 26, 25, 0.08);
+  --card-radius: 18px;
+  --soft-radius: 24px;
+  --shadow-green: 0 12px 28px rgba(25, 141, 64, 0.16);
+}
+
+.app-release-note-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: min(100%, 540px);
+  min-height: 56px;
+  padding: 0.95rem 1.4rem;
+  border: 1px solid var(--nf-green-line);
+  border-radius: 18px;
+  background: var(--nf-green-soft);
+  color: var(--nf-green-dark);
+  font-size: 0.94rem;
+  line-height: 1.45;
+  font-weight: 600;
+  text-align: center;
+}
+
+.app-release-note-v1::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 100%;
+  background: var(--nf-green);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-release-note-v1 {
+    transition: none;
+  }
+}
+
+/* Live price catalogue – retain existing responsive pricing layout. */
+.pricing-page-v3 .pricing-tabs-wrap-v3 {
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.pricing-catalog-status {
+  width: min(100%, 720px);
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+.pricing-catalog-status[data-state="error"] {
+  color: #a14236;
+}
+.pricing-catalog-status[data-state="ready"] {
+  color: var(--nf-green-dark);
+}
+.pricing-catalog-old-price {
+  color: var(--muted);
+  font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+  text-decoration: line-through;
+  padding-bottom: 0.26rem;
+}
+.pricing-catalog-promotion {
+  display: inline-flex;
+  margin-top: 0.82rem;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid var(--nf-green-line);
+  border-radius: 99px;
+  background: var(--nf-green-soft);
+  color: var(--nf-green-dark);
+  font-size: 0.83rem;
+  font-weight: 750;
+}
+.pricing-catalog-subtitle {
+  margin-top: 0.9rem;
+  color: var(--text-soft);
+  font-size: 1rem;
+}
+.pricing-catalog-note {
+  max-width: 530px;
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.pricing-catalog-retry {
+  display: block;
+  margin: 1.5rem auto;
+}
+@media (max-width: 720px) {
+  .pricing-catalog-status { font-size: 0.84rem; }
+  .pricing-catalog-subtitle { text-align: center; }
+  .pricing-catalog-note { text-align: center; }
+}

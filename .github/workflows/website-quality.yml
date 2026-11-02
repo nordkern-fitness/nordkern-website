@@ -1,0 +1,42 @@
+name: Nordkern Website Quality
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrity:
+    name: Website checks and preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout website
+        uses: actions/checkout@v4
+
+      - name: Check HTML paths and domain
+        run: python3 scripts/check_site.py
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check js/main.js
+          node --check js/catalog.js
+
+      - name: Test public catalogue client
+        run: node --test tests/*.test.cjs
+
+      - name: Build double-click preview
+        run: python3 scripts/build_preview.py
+
+      - name: Upload downloadable website preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nordkern-Website-Vorschau
+          path: preview/
+          if-no-files-found: error
+          retention-days: 14

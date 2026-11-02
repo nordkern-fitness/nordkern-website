@@ -50,3 +50,61 @@
     transition: none;
   }
 }
+
+/* Live price catalogue – retain existing responsive pricing layout. */
+.pricing-page-v3 .pricing-tabs-wrap-v3 {
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.pricing-catalog-status {
+  width: min(100%, 720px);
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+.pricing-catalog-status[data-state="error"] {
+  color: #a14236;
+}
+.pricing-catalog-status[data-state="ready"] {
+  color: var(--nf-green-dark);
+}
+.pricing-catalog-old-price {
+  color: var(--muted);
+  font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+  text-decoration: line-through;
+  padding-bottom: 0.26rem;
+}
+.pricing-catalog-promotion {
+  display: inline-flex;
+  margin-top: 0.82rem;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid var(--nf-green-line);
+  border-radius: 99px;
+  background: var(--nf-green-soft);
+  color: var(--nf-green-dark);
+  font-size: 0.83rem;
+  font-weight: 750;
+}
+.pricing-catalog-subtitle {
+  margin-top: 0.9rem;
+  color: var(--text-soft);
+  font-size: 1rem;
+}
+.pricing-catalog-note {
+  max-width: 530px;
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.pricing-catalog-retry {
+  display: block;
+  margin: 1.5rem auto;
+}
+@media (max-width: 720px) {
+  .pricing-catalog-status { font-size: 0.84rem; }
+  .pricing-catalog-subtitle { text-align: center; }
+  .pricing-catalog-note { text-align: center; }
+}

@@ -97,26 +97,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       file: "components/home-section-urlaubspass.html"
     },
     {
-      selector: selectors.tarifBasicSlot,
-      file: "components/tarif-basic.html"
-    },
-    {
-      selector: selectors.tarifPlusSlot,
-      file: "components/tarif-plus.html"
-    },
-    {
-      selector: selectors.tarifProSlot,
-      file: "components/tarif-pro.html"
-    },
-    {
-      selector: selectors.tarifTagespassSlot,
-      file: "components/tarif-tagespass.html"
-    },
-    {
-      selector: selectors.tarifUrlaubspassSlot,
-      file: "components/tarif-urlaubspass.html"
-    },
-    {
       selector: selectors.tarifSectionGetraenkeautomatSlot,
       file: "components/tarif-section-getraenkeautomat.html"
     }
@@ -1020,7 +1000,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupMobileMenu();
   setupHeaderScrollState();
   setupPageTransitions();
-  setupPricingTabs();
+  // Pricing panels are rendered from the public Supabase catalogue, never stale HTML.
+  // Run tab handlers only after the validated products have been rendered.
+  if (document.querySelector("[data-catalog-panels]")) {
+    if (window.NordkernCatalog) {
+      void window.NordkernCatalog.mount().then((loaded) => {
+        if (loaded) setupPricingTabs();
+      });
+    }
+  } else {
+    setupPricingTabs();
+  }
   setupPricingInfoModal();
   setupContactForm();
   setupFaqSearch();

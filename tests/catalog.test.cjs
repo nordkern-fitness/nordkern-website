@@ -60,7 +60,7 @@ test('Uses only the public API key and filters out unpublished tariffs', async (
   });
   const values = await loadCatalogue();
   assert.equal(values.length, 2);
-  assert.deepEqual(values.map(x => x.kind), ['membership', 'pass']);
+  assert.equal(Array.from(values, x => x.kind).join(','), 'membership,pass');
   assert.equal(requests.length, 2);
   for (const r of requests) {
     assert.ok(r.url.includes('active=eq.true'));

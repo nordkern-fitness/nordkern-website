@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const loadComponent = async (selector, file) => {
     const target = document.querySelector(selector);
-    if (!target) return;
+    if (!target || target.dataset.previewInlined === "true") return;
 
     try {
       const response = await fetch(file);

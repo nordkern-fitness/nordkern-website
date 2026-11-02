@@ -5,7 +5,7 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML = sorted(ROOT.rglob("*.html"))
-EXCLUDE = {".git", "node_modules", "dist"}
+EXCLUDE = {".git", "node_modules", "dist", "preview"}
 ATTRS = {"href", "src", "poster"}
 
 

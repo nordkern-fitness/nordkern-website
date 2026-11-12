@@ -71,3 +71,10 @@ test('server decides checkout entitlement, never browser redirects',()=>{
   assert.match(source,/\/rest\/v1\/memberships\?select=/);
   assert.match(source,/sessionStorage/);
 });
+
+test('test checkout requires positive server capability, never only local browser flag',()=>{
+  assert.match(source,/\/functions\/v1\/create-offer-checkout/);
+  assert.match(source,/checkoutCapabilities\?\.webCheckoutEnabled === true/);
+  assert.match(html,/id="nk-checkout-availability"/);
+  assert.match(source,/\.catch\(\(\) => \(\{webCheckoutEnabled:false\}\)\)/);
+});

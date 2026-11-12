@@ -13,6 +13,10 @@
   let catalogue = [];
   let busy = false;
   let pendingCheckout = null;
+  let pendingShopCheckout = null;
+  let webCheckoutEnabled = false;
+  let shopCheckoutReady = false;
+  let shopCart = [];
 
   function validSession(value) {
     return !!value && typeof value === 'object' &&
@@ -156,7 +160,7 @@
       authorized('/rest/v1/member_studios?select=studio_id,change_allowed_at&user_id=eq.' + user + '&limit=1'),
       authorized('/rest/v1/memberships?select=id,status,starts_at,current_period_end,cancellation_effective_at&user_id=eq.' + user + '&limit=30'),
       authorized('/rest/v1/passes?select=id,title,status,starts_at,expires_at&user_id=eq.' + user + '&limit=50'),
-      authorized('/rest/v1/wallet_balances?select=drinks,creatine,protein&user_id=eq.' + user + '&limit=1'),
+      authorized('/rest/v1/wallet_balances?select=drinks,additional_drinks,creatine,protein&user_id=eq.' + user + '&limit=1'),
       authorized('/rest/v1/studios?select=id,name,slug,active&active=eq.true&order=name.asc&limit=50'),
       window.NordkernCatalog.loadCatalogue(),
       authorized('/functions/v1/create-offer-checkout')
@@ -194,7 +198,8 @@
     for (const p of passes) messages.push(String(p.title) + ' · ' + String(p.status) +
       ' · Endet: ' + date(p.expires_at));
     const wallet = wallets[0];
-    if (wallet) messages.push('Guthaben: ' + Number(wallet.drinks ?? 0) + ' Getränke · ' +
+    if (wallet) messages.push('Guthaben: ' + Number(wallet.drinks ?? 0) + ' Freigetränke · ' +
+      Number(wallet.additional_drinks ?? 0) + ' zusätzliche Getränke · ' +
       Number(wallet.creatine ?? 0) + ' Kreatin · ' + Number(wallet.protein ?? 0) + ' Protein');
     list(byId('nk-member-contracts'), messages);
     renderOptions(byId('nk-offer-select'), catalogue.map((row, index) => ({
@@ -204,6 +209,7 @@
     })), '');
     const checkoutAvailable = TEST_ONLY && checkoutCapabilities?.testMode === true &&
       checkoutCapabilities?.webCheckoutEnabled === true;
+    webCheckoutEnabled = checkoutAvailable;
     byId('nk-checkout-button').disabled = !checkoutAvailable ||
       catalogue.length === 0 || !studioChoice;
     const availability = byId('nk-checkout-availability');
@@ -211,10 +217,139 @@
       ? 'Stripe-Testbuchungen sind serverseitig freigeschaltet. Es werden keine Live-Zahlungen durchgeführt.'
       : 'Testbuchungen sind noch nicht freigeschaltet. Du kannst Tarife und Kontostand trotzdem ansehen.';
     showAccount(true);
+    await loadShopAccount(checkoutAvailable,user);
     if (new URLSearchParams(window.location.search).get('status') === 'success') {
       feedback('Zurück vom Stripe-Testcheckout. Eine Weiterleitung ist kein Zahlungsnachweis. Der Kontostatus wird ausschließlich serverseitig geführt.');
     }
   }
+
+  const euro = value => new Intl.NumberFormat('de-DE',{
+    style:'currency',currency:'EUR'
+  }).format(value/100);
+  const element = (tag, textValue) => {
+    const node = document.createElement(tag);
+    if (textValue !== undefined) node.textContent = String(textValue);
+    return node;
+  };
+  async function loadShopAccount(canCheckout,userId) {
+    const display=byId('nk-web-shop-cart');
+    const status=byId('nk-web-shop-checkout-status');
+    const history=byId('nk-web-order-history');
+    shopCheckoutReady=false;
+    byId('nk-web-shop-checkout').disabled=true;
+    display.replaceChildren();
+    history.textContent='Bestellhistorie wird aktualisiert.';
+    status.textContent='Veröffentlichtes Shopsortiment wird geprüft.';
+    try {
+      if (!window.NordkernShop || !window.NordkernShopCart)
+        throw new Error('Warenkorb-Dienst fehlt.');
+      const [catalogue,orders]=await Promise.all([
+        window.NordkernShop.loadCatalogue(),
+        authorized('/rest/v1/orders?select=id,user_id,public_number,status,currency,total_cents,created_at,paid_at,refunded_cents&user_id=eq.'+
+          userId+'&order=created_at.desc&limit=30')
+      ]);
+      if(!Array.isArray(orders)||orders.length>30||orders.some(order=>
+        !UUID.test(order?.id)||order.user_id!==userId||order.currency!=='eur'||
+        typeof order.total_cents!=='number'||!Number.isSafeInteger(order.total_cents)||
+        order.total_cents<0||
+        !['pending_payment','paid','partially_refunded','failed','cancelled','refunded'].includes(order.status)))
+        throw new Error('Bestellhistorie konnte nicht sicher überprüft werden.');
+      const ids=orders.map(order=>order.id);
+      const items=ids.length ? await authorized(
+        '/rest/v1/order_items?select=id,order_id,title,quantity,unit_price_cents&order_id=in.('+
+        ids.join(',')+')&limit=200') : [];
+      if(!Array.isArray(items)||items.length>200||
+        items.some(item=>!UUID.test(item?.id)||!ids.includes(item.order_id)||
+          typeof item.title!=='string'||!Number.isSafeInteger(item.quantity)||
+          item.quantity<1||!Number.isSafeInteger(item.unit_price_cents)||
+          item.unit_price_cents<0))
+        throw new Error('Bestellpositionen konnten nicht sicher überprüft werden.');
+
+      shopCart=window.NordkernShopCart.publishedCart(
+        window.NordkernShopCart.readCart(),catalogue.products);
+      const selected=shopCart.map(line=>({
+        line,product:catalogue.products.find(p=>p.id===line.product_id)
+      })).filter(entry=>entry.product);
+      display.replaceChildren();
+      if(!selected.length)display.appendChild(element('p','Noch keine freigegebenen digitalen Guthabenartikel im Warenkorb.'));
+      let subtotal=0;
+      for(const {line,product} of selected) {
+        const wrapper=element('p');
+        wrapper.appendChild(element('strong',line.quantity+' × '+product.title));
+        wrapper.appendChild(document.createTextNode(' · '+euro(line.quantity*product.price_cents)));
+        display.appendChild(wrapper);
+        subtotal+=line.quantity*product.price_cents;
+      }
+      if(selected.length)display.appendChild(element('strong',
+        'Warenkorbvorschau: '+euro(subtotal)+' · endgültigen Betrag bestätigt Stripe nach Serverabgleich.'));
+      shopCheckoutReady=canCheckout&&selected.length>0;
+      byId('nk-web-shop-checkout').disabled=!shopCheckoutReady;
+      status.textContent=shopCheckoutReady
+        ? 'Stripe-Testcheckout serverseitig freigeschaltet. Keine Live-Zahlung.'
+        : 'Bestellung noch nicht freigeschaltet oder Warenkorb leer. Produktive Zahlungen bleiben deaktiviert.';
+
+      history.replaceChildren();
+      if(!orders.length)history.appendChild(element('p','Du hast noch keine Bestellungen.'));
+      const states={pending_payment:'Zahlung ausstehend',paid:'Bezahlt',
+        partially_refunded:'Teilweise erstattet · Prüfung offen',
+        refunded:'Erstattet',failed:'Zahlung fehlgeschlagen',cancelled:'Abgebrochen'};
+      for(const order of orders) {
+        const section=element('section');
+        section.appendChild(element('strong',
+          String(order.public_number)+' · '+states[order.status]+' · '+euro(order.total_cents)));
+        section.appendChild(element('p','Bestellt am '+date(order.created_at)));
+        for(const item of items.filter(item=>item.order_id===order.id)){
+          section.appendChild(element('p',item.quantity+' × '+item.title+' · '+
+            euro(item.quantity*item.unit_price_cents)));
+        }
+        history.appendChild(section);
+      }
+    } catch(error) {
+      shopCheckoutReady=false;
+      byId('nk-web-shop-checkout').disabled=true;
+      status.textContent='Shop und Testkasse derzeit nicht verfügbar.';
+      history.textContent=error instanceof Error?error.message:'Bestellungen konnten nicht geladen werden.';
+    }
+  }
+  async function startShopTestCheckout() {
+    await run(async()=>{
+      if(!shopCheckoutReady||!webCheckoutEnabled||!session||!activeUser||
+        !window.NordkernShopCart?.validCart(shopCart)||!shopCart.length)
+        throw new Error('Shop-Testcheckout ist derzeit nicht verfügbar.');
+      if(!window.crypto?.randomUUID)
+        throw new Error('Sicherer Browser für Testcheckout erforderlich.');
+      const signature=activeUser+':'+JSON.stringify(shopCart);
+      if(pendingShopCheckout?.signature!==signature){
+        pendingShopCheckout={signature,key:'nk-web-shop-'+window.crypto.randomUUID()};
+      }
+      const result=await authorized('/functions/v1/create-shop-checkout',{
+        method:'POST',headers:{'idempotency-key':pendingShopCheckout.key},
+        body:{items:shopCart,returnSurface:'web'}
+      });
+      if(!safeCheckoutUrl(result?.checkoutUrl)||!UUID.test(result?.orderId)||
+        result.status!=='pending_payment')
+        throw new Error('Bestellung oder Stripe-Testcheckout nicht bestätigt.');
+      window.location.assign(result.checkoutUrl);
+    });
+  }
+  async function changeOwnPassword(event) {
+    event.preventDefault();
+    await run(async()=>{
+      if(!session)throw new Error('Bitte erneut anmelden.');
+      const form=event.currentTarget;
+      const oldPassword=String(form.elements.oldPassword.value??'');
+      const newPassword=String(form.elements.newPassword.value??'');
+      const confirm=String(form.elements.newPasswordRepeat.value??'');
+      if(!oldPassword||newPassword.length<12||newPassword.length>256||
+        oldPassword===newPassword||newPassword!==confirm)
+        throw new Error('Neues Passwort ungültig oder Bestätigung stimmt nicht überein.');
+      await authorized('/auth/v1/user',{method:'PUT',
+        body:{current_password:oldPassword,password:newPassword}});
+      form.reset();
+      feedback('Der Anmeldedienst hat das neue Passwort bestätigt.');
+    });
+  }
+
   async function run(fn) {
     if (busy) return;
     busy = true;
@@ -227,7 +362,8 @@
       feedback(error instanceof Error ? error.message : 'Vorgang konnte nicht bestätigt werden.',true);
     }
     finally { busy = false; buttons.forEach(button => {
-      if (button.id === 'nk-studio-save' || button.id === 'nk-checkout-button') return;
+      if (button.id === 'nk-studio-save' || button.id === 'nk-checkout-button' ||
+          button.id === 'nk-web-shop-checkout') return;
       button.disabled = false;
     }); }
   }
@@ -274,8 +410,8 @@
   }
   async function startTestCheckout() {
     await run(async () => {
-      if (!TEST_ONLY || !session || !studioChoice ||
-          byId('nk-checkout-button').disabled) throw new Error('Testbuchung nicht verfügbar.');
+      if (!TEST_ONLY || !session || !studioChoice || !webCheckoutEnabled)
+        throw new Error('Testbuchung nicht verfügbar.');
       const row = catalogue[Number(byId('nk-offer-select').value)];
       if (!row) throw new Error('Bitte einen Tarif oder Pass auswählen.');
       if (!window.crypto?.randomUUID) throw new Error('Sicherer Browser für Testcheckout erforderlich.');
@@ -298,7 +434,8 @@
   }
   async function logout() {
     const old = session;
-    session = null;activeUser = null;studioChoice = null;store();
+    session = null;activeUser = null;studioChoice = null;
+    webCheckoutEnabled = false;shopCheckoutReady = false;store();
     showAccount(false);
     feedback('Lokal abgemeldet.');
     if (old?.accessToken) {
@@ -312,15 +449,22 @@
     byId('nk-reset-form').addEventListener('submit',event=>{void reset(event);});
     byId('nk-studio-save').addEventListener('click',()=>{void saveStudio();});
     byId('nk-checkout-button').addEventListener('click',()=>{void startTestCheckout();});
+    byId('nk-web-shop-checkout').addEventListener('click',()=>{void startShopTestCheckout();});
+    byId('nk-orders-reload').addEventListener('click',()=>{void run(loadAccount);});
+    byId('nk-password-change-form').addEventListener('submit',event=>{void changeOwnPassword(event);});
     byId('nk-logout').addEventListener('click',()=>{void logout();});
     byId('nk-reload').addEventListener('click',()=>{void run(loadAccount);});
     byId('nk-checkout-button').disabled=true;
+    byId('nk-web-shop-checkout').disabled=true;
     try {
       const cached = JSON.parse(sessionStorage.getItem(KEY) ?? 'null');
       if (validSession(cached)) session = cached;
     } catch { /* No persisted login. */ }
     const checkoutStatus = new URLSearchParams(window.location.search).get('status');
-    if (checkoutStatus === 'success' || checkoutStatus === 'cancelled') pendingCheckout = null;
+    if (checkoutStatus === 'success' || checkoutStatus === 'cancelled') {
+      pendingCheckout = null;
+      pendingShopCheckout = null;
+    }
     if (session) {
       await run(loadAccount);
     } else showAccount(false);

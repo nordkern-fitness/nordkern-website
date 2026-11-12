@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (typeof hash !== "string" || !hash.startsWith("#") || hash.length > 2048) return null;
     try {
       const id = decodeURIComponent(hash.slice(1));
-      if (!id || id.length > 512 || /[\\u0000-\\u001f\\u007f]/.test(id)) return null;
+      if (!id || id.length > 512 || /[\u0000-\u001f\u007f]/.test(id)) return null;
       return document.getElementById(id);
     } catch {
       return null;

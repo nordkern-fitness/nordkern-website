@@ -12,6 +12,7 @@
   let studios = [];
   let catalogue = [];
   let busy = false;
+  let pendingCheckout = null;
 
   function validSession(value) {
     return !!value && typeof value === 'object' &&
@@ -212,7 +213,10 @@
     buttons.forEach(button => { button.disabled = true; });
     feedback('');
     try { await fn(); }
-    catch (error) { feedback(error instanceof Error ? error.message : 'Vorgang konnte nicht bestätigt werden.',true); }
+    catch (error) {
+      if (!session) showAccount(false);
+      feedback(error instanceof Error ? error.message : 'Vorgang konnte nicht bestätigt werden.',true);
+    }
     finally { busy = false; buttons.forEach(button => {
       if (button.id === 'nk-studio-save' || button.id === 'nk-checkout-button') return;
       button.disabled = false;
@@ -264,8 +268,14 @@
       if (!TEST_ONLY || !session || !studioChoice) throw new Error('Testbuchung nicht verfügbar.');
       const row = catalogue[Number(byId('nk-offer-select').value)];
       if (!row) throw new Error('Bitte einen Tarif oder Pass auswählen.');
-      if (!crypto?.randomUUID) throw new Error('Sicherer Browser für Testcheckout erforderlich.');
-      const idempotencyKey = 'nk-web-' + crypto.randomUUID();
+      if (!window.crypto?.randomUUID) throw new Error('Sicherer Browser für Testcheckout erforderlich.');
+      const selectionKey = activeUser + ':' + row.kind + ':' + row.item.slug;
+      // Reuse the same request key after a network timeout instead of creating
+      // a second Stripe Checkout Session for the same attempted purchase.
+      if (pendingCheckout?.selection !== selectionKey) {
+        pendingCheckout = {selection: selectionKey, key: 'nk-web-' + window.crypto.randomUUID()};
+      }
+      const idempotencyKey = pendingCheckout.key;
       const result = await authorized('/functions/v1/create-offer-checkout', {
         method:'POST', headers:{'idempotency-key':idempotencyKey},
         body:{offerId:row.item.slug,offerType:row.kind,returnSurface:'web'}
@@ -299,6 +309,8 @@
       const cached = JSON.parse(sessionStorage.getItem(KEY) ?? 'null');
       if (validSession(cached)) session = cached;
     } catch { /* No persisted login. */ }
+    const checkoutStatus = new URLSearchParams(window.location.search).get('status');
+    if (checkoutStatus === 'success' || checkoutStatus === 'cancelled') pendingCheckout = null;
     if (session) {
       await run(loadAccount);
     } else showAccount(false);

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Geschützter Nordkern-Fitness-Mitgliederbereich für bestehende Konten mit Studioauswahl, Verträgen und Stripe-Testcheckout." />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Mitgliederbereich – Nordkern Fitness</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png?v=3" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/nordkern-brand.css" />
+  <link rel="stylesheet" href="css/konto.css" />
+</head>
+<body>
+  <div data-header></div>
+  <main class="nk-account">
+    <header class="nk-account-hero">
+      <p class="eyebrow">Nordkern FDS · Mitgliederbereich</p>
+      <h1>Dein Konto. Klar im Blick.</h1>
+      <p>Studio, Mitgliedschaft, Pässe und deine nächsten Schritte – gesichert über dieselbe Nordkern-Datenbank wie in der App.</p>
+    </header>
+    <div class="nk-account-shell">
+      <p class="nk-account-test-note" role="status">Entwicklungsversion: Buchungen sind ausschließlich im Stripe-Testmodus möglich. Eine Rückleitung bestätigt noch keine Zahlung und eröffnet keinen Zutritt.</p>
+      <p class="nk-account-feedback" id="nk-account-feedback" role="status" aria-live="polite"></p>
+      <p class="nk-account-error" id="nk-account-error" role="alert" aria-live="assertive" hidden></p>
+
+      <section class="nk-account-panel" id="nk-login-panel" aria-labelledby="nk-login-title">
+        <p class="eyebrow">Schon Mitglied?</p>
+        <h2 id="nk-login-title">Sicher anmelden.</h2>
+        <p>Dieser Bereich ist für bereits registrierte Mitglieder gedacht. Eine neue Registrierung ist noch nicht freigeschaltet.</p>
+        <form id="nk-login-form">
+          <label for="nk-login-email">E-Mail-Adresse</label>
+          <input type="email" id="nk-login-email" name="email" autocomplete="email" maxlength="254" required />
+          <label for="nk-login-password">Passwort</label>
+          <input type="password" id="nk-login-password" name="password" autocomplete="current-password" required minlength="8" />
+          <button type="submit" id="nk-login-submit">Anmelden</button>
+        </form>
+        <form id="nk-reset-form" class="nk-account-reset">
+          <label for="nk-reset-email">Passwort vergessen?</label>
+          <div class="nk-account-inline">
+            <input type="email" id="nk-reset-email" name="email" placeholder="E-Mail-Adresse" autocomplete="email" maxlength="254" required />
+            <button type="submit" class="nk-account-subtle">Zurücksetzen</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="nk-member-panel" hidden aria-label="Dein Mitgliederkonto">
+        <div class="nk-account-panel">
+          <div class="nk-account-head-row">
+            <div>
+              <p class="eyebrow">Mitgliederkonto</p>
+              <h2 id="nk-member-name">Dein Nordkern-Konto.</h2>
+            </div>
+            <button type="button" class="nk-account-subtle" id="nk-logout">Abmelden</button>
+          </div>
+          <p id="nk-member-id"></p>
+          <button type="button" class="nk-account-subtle" id="nk-reload">Daten aktualisieren</button>
+        </div>
+        <div class="nk-account-grid">
+          <section class="nk-account-panel" aria-labelledby="nk-studio-title">
+            <p class="eyebrow">Dein Studio</p>
+            <h2 id="nk-studio-title">Standort.</h2>
+            <p id="nk-studio-status">Studiozuordnung wird geladen.</p>
+            <label for="nk-studio-select">Zugeordnetes Studio</label>
+            <select id="nk-studio-select"></select>
+            <button type="button" id="nk-studio-save">Studioauswahl speichern</button>
+            <p class="nk-account-hint">Ein Studiowechsel wird nur bei serverseitiger Freigabe durchgeführt.</p>
+          </section>
+          <section class="nk-account-panel" aria-labelledby="nk-contract-title">
+            <p class="eyebrow">Vertrag und Guthaben</p>
+            <h2 id="nk-contract-title">Deine Leistungen.</h2>
+            <div id="nk-member-contracts"></div>
+          </section>
+        </div>
+        <section class="nk-account-panel" aria-labelledby="nk-offer-title">
+          <p class="eyebrow">Bezahlvorgang</p>
+          <h2 id="nk-offer-title">Tarif oder Pass wählen.</h2>
+          <p>Die Konditionen werden ausschließlich aus dem aktuellen Supabase-Katalog geladen. Es wird kein Vertrag allein durch die Rückkehr aus Stripe aktiviert.</p>
+          <label for="nk-offer-select">Angebot</label>
+          <select id="nk-offer-select"></select>
+          <button type="button" id="nk-checkout-button">Stripe-Testcheckout öffnen</button>
+          <p class="nk-account-hint">Bis zur Konfiguration des serverseitigen Testcheckouts bleibt die Funktion gesperrt. Produktive Zahlungen werden nicht ausgelöst.</p>
+          <p class="nk-account-hint">Den dynamischen Zutrittscode kannst du ausschließlich mit der iOS-/Android-App und einem zugelassenen Gerät anzeigen.</p>
+        </section>
+      </section>
+    </div>
+  </main>
+  <div data-footer></div>
+  <script src="js/catalog.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/account.js"></script>
+</body>
+</html>

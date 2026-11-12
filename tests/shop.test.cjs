@@ -54,10 +54,19 @@ test('API failures are surfaced; no stale or invented shop inventory',async()=>{
  await assert.rejects(api.loadCatalogue());
  assert.deepEqual(load().parseCatalogue([],[]).products.length,0);
 });
-test('shop is navigable and contains no premature purchase buttons',()=>{
+test('shop checkout is never public: authenticated portal and server gate required',()=>{
+ const accountHtml=fs.readFileSync(path.join(root,'konto.html'),'utf8');
+ const accountScript=fs.readFileSync(path.join(root,'js/account.js'),'utf8');
  assert.match(html,/js\/shop\.js/);
+ assert.match(html,/js\/shop-cart\.js/);
  assert.match(html,/id="nkshop-grid"/);
+ assert.match(html,/href="konto.html#shop"/);
  assert.match(header,/href="shop.html"/);
- assert.match(html,/Bestellung ist noch nicht möglich/);
+ assert.match(html,/Stripe-Testmodus/);
  assert.doesNotMatch(html,/<button[^>]*>.*?(kaufen|bestellen).*?<\/button>/i);
+ assert.match(accountHtml,/id="nk-web-shop-checkout" disabled/);
+ assert.match(accountScript,/shopCheckoutReady=canCheckout&&selected.length>0/);
+ assert.match(accountScript,/returnSurface:'web'/);
+ assert.match(accountScript,/\/functions\/v1\/create-shop-checkout/);
+ assert.doesNotMatch(accountScript,/STRIPE_SECRET_KEY|SUPABASE_SERVICE_ROLE_KEY/);
 });

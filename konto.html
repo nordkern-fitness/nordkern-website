@@ -83,12 +83,47 @@
           <p class="nk-account-hint">Bis zur Konfiguration des serverseitigen Testcheckouts bleibt die Funktion gesperrt. Produktive Zahlungen werden nicht ausgelöst.</p>
           <p class="nk-account-hint">Den dynamischen Zutrittscode kannst du ausschließlich mit der iOS-/Android-App und einem zugelassenen Gerät anzeigen.</p>
         </section>
+        <section class="nk-account-panel" id="shop" aria-labelledby="nk-shop-member-title">
+          <p class="eyebrow">Digitaler Testshop</p>
+          <h2 id="nk-shop-member-title">Deine Testbestellung.</h2>
+          <p>Der Warenkorb enthält ausschließlich die Produkt-IDs aus dem öffentlichen Shop. Preise und Berechtigungen bestätigt immer der Server.</p>
+          <div id="nk-web-shop-cart" role="status" aria-live="polite"></div>
+          <p id="nk-web-shop-checkout-status" class="nk-account-hint" role="status" aria-live="polite"></p>
+          <button type="button" id="nk-web-shop-checkout" disabled>Stripe-Testbestellung öffnen</button>
+          <p><a href="shop.html">Zum Shop und Warenkorb zurück</a></p>
+        </section>
+        <section class="nk-account-panel" aria-labelledby="nk-orders-title">
+          <p class="eyebrow">Persönlicher Verlauf</p>
+          <h2 id="nk-orders-title">Deine Bestellungen.</h2>
+          <p>Nur Bestellungen deines angemeldeten Kontos. Eine Stripe-Rückleitung ist kein Zahlungsnachweis.</p>
+          <div id="nk-web-order-history" role="status" aria-live="polite">Bestellhistorie wird geladen.</div>
+          <button type="button" id="nk-orders-reload" class="nk-account-subtle">Bestellungen aktualisieren</button>
+        </section>
+        <section class="nk-account-panel" aria-labelledby="nk-account-password-title">
+          <p class="eyebrow">Kontosicherheit</p>
+          <h2 id="nk-account-password-title">Passwort ändern.</h2>
+          <p>Die Änderung wird vom Nordkern-Anmeldedienst geprüft. Mindestens 12 Zeichen und Bestätigung des bisherigen Passworts.</p>
+          <form id="nk-password-change-form" autocomplete="off">
+            <label for="nk-current-password">Bisheriges Passwort</label>
+            <input type="password" id="nk-current-password" name="oldPassword"
+              autocomplete="current-password" minlength="8" required maxlength="256"/>
+            <label for="nk-new-password">Neues Passwort</label>
+            <input type="password" id="nk-new-password" name="newPassword"
+              autocomplete="new-password" minlength="12" required maxlength="256"/>
+            <label for="nk-new-password-repeat">Neues Passwort wiederholen</label>
+            <input type="password" id="nk-new-password-repeat" name="newPasswordRepeat"
+              autocomplete="new-password" minlength="12" required maxlength="256"/>
+            <button type="submit">Passwort aktualisieren</button>
+          </form>
+        </section>
       </section>
     </div>
   </main>
   <div data-footer></div>
   <script src="js/catalog.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/shop-cart.js"></script>
+  <script src="js/shop.js"></script>
   <script src="js/account.js"></script>
 </body>
 </html>

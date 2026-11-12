@@ -29,6 +29,7 @@ jobs:
           node --check js/studios.js
           node --check js/account.js
           node --check js/shop.js
+          node --check js/shop-cart.js
 
       - name: Test public catalogue client
         run: node --test tests/*.test.cjs

@@ -69,7 +69,40 @@
     const status=document.getElementById("nkshop-status");
     const filters=document.getElementById("nkshop-filters");
     if(!grid||!status||!filters)return;
+    const cartArea=document.getElementById("nkshop-cart");
+    const cartLink=document.getElementById("nkshop-account-link");
+    const cartApi=window.NordkernShopCart;
     let selected="all",catalogue=null;
+    const renderCart=()=>{
+      if(!cartArea||!catalogue)return;
+      cartArea.replaceChildren();
+      const current=cartApi?.readCart()??[];
+      const allowed=cartApi?.publishedCart(current,catalogue.products)??[];
+      if(cartApi&&allowed.length!==current.length){
+        try{cartApi.writeCart(allowed);}catch{/* Session storage may be disabled. */}
+      }
+      const count=allowed.reduce((sum,line)=>sum+line.quantity,0);
+      if(!allowed.length){
+        cartArea.appendChild(element("p","","Dein Testwarenkorb ist noch leer."));
+      }else{
+        let total=0;
+        for(const line of allowed){
+          const product=catalogue.products.find(p=>p.id===line.product_id);
+          if(!product)continue;
+          total+=product.price_cents*line.quantity;
+          const container=element("div","shop-cart-line-v3");
+          container.appendChild(element("span","",line.quantity+" × "+product.title));
+          container.appendChild(element("strong","",euros(line.quantity*product.price_cents)));
+          cartArea.appendChild(container);
+        }
+        cartArea.appendChild(element("p","shop-cart-total-v3",count+" Einheiten · "+
+          euros(total)+" (Katalogvorschau; verbindlich ist der Serverpreis)"));
+      }
+      if(cartLink){
+        cartLink.setAttribute("aria-disabled",String(!count));
+        cartLink.tabIndex=count?0:-1;
+      }
+    };
     const draw=()=>{
       grid.replaceChildren();
       filters.replaceChildren();
@@ -101,10 +134,39 @@
         card.appendChild(element("strong","",euros(item.price_cents)));
         card.appendChild(element("p","",item.description));
         const label=item.stock_quantity===0?"Momentan ausverkauft."
-          :"Kaufabwicklung noch nicht freigeschaltet.";
+          :item.fulfillment==="digital_credit"&&item.stock_quantity===null
+            ?"Nur Testcheckout im geschützten Mitgliederkonto nach Serverfreigabe."
+            :"Versandbestellung noch nicht freigeschaltet.";
         card.appendChild(element("p","shop-card-info-v3",label));
+        const eligible=item.fulfillment==="digital_credit"&&item.stock_quantity===null;
+        if(eligible&&cartApi){
+          const controls=element("div","shop-card-controls-v3");
+          const current=cartApi.readCart();
+          const quantity=current.find(line=>line.product_id===item.id)?.quantity??0;
+          const totalUnits=current.reduce((sum,line)=>sum+line.quantity,0);
+          const decrease=element("button","","−");
+          decrease.type="button";decrease.disabled=quantity===0;
+          decrease.setAttribute("aria-label","Einen "+item.title+" entfernen");
+          decrease.addEventListener("click",()=>{
+            try{cartApi.writeCart(cartApi.updateCart(cartApi.readCart(),item.id,-1));draw();}
+            catch{status.textContent="Warenkorb konnte nicht aktualisiert werden.";}
+          });
+          const increase=element("button","","＋");
+          increase.type="button";increase.disabled=quantity>=10||totalUnits>=20||
+            (current.length>=8&&quantity===0);
+          increase.setAttribute("aria-label","Einen "+item.title+" hinzufügen");
+          increase.addEventListener("click",()=>{
+            try{cartApi.writeCart(cartApi.updateCart(cartApi.readCart(),item.id,1));draw();}
+            catch{status.textContent="Maximale Warenkorbmenge erreicht oder Speicher nicht verfügbar.";}
+          });
+          controls.appendChild(decrease);
+          controls.appendChild(element("span","",quantity+" im Warenkorb"));
+          controls.appendChild(increase);
+          card.appendChild(controls);
+        }
         grid.appendChild(card);
       }
+      renderCart();
     };
     const load=async()=>{
       grid.setAttribute("aria-busy","true");
@@ -115,7 +177,7 @@
         selected="all";
         draw();
         status.textContent=catalogue.products.length
-          ?"Aktuelle Produkte direkt aus dem Nordkern-Katalog · Bestellungen noch nicht verfügbar."
+          ?"Aktuelle Produkte aus dem Nordkern-Katalog · digitale Guthabenartikel im Stripe-Testmodus nach Anmeldung."
           :"Derzeit sind keine Produkte veröffentlicht.";
       }catch{
         catalogue=null;

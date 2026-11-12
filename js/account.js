@@ -151,14 +151,16 @@
     }
     activeUser = identity.id;
     const user = identity.id;
-    const [profiles, selections, memberships, passes, wallets, studioList, offers] = await Promise.all([
+    const [profiles, selections, memberships, passes, wallets, studioList, offers, checkoutCapabilities] = await Promise.all([
       authorized('/rest/v1/profiles?select=id,member_id,first_name,last_name,account_enabled&id=eq.' + user + '&limit=1'),
       authorized('/rest/v1/member_studios?select=studio_id,change_allowed_at&user_id=eq.' + user + '&limit=1'),
       authorized('/rest/v1/memberships?select=id,status,starts_at,current_period_end,cancellation_effective_at&user_id=eq.' + user + '&limit=30'),
       authorized('/rest/v1/passes?select=id,title,status,starts_at,expires_at&user_id=eq.' + user + '&limit=50'),
       authorized('/rest/v1/wallet_balances?select=drinks,creatine,protein&user_id=eq.' + user + '&limit=1'),
       authorized('/rest/v1/studios?select=id,name,slug,active&active=eq.true&order=name.asc&limit=50'),
-      window.NordkernCatalog.loadCatalogue()
+      window.NordkernCatalog.loadCatalogue(),
+      authorized('/functions/v1/create-offer-checkout')
+        .catch(() => ({webCheckoutEnabled:false}))
     ]);
     if (!Array.isArray(profiles) || profiles.length !== 1 || profiles[0].id !== user ||
         profiles[0].account_enabled !== true || !Array.isArray(selections) ||
@@ -200,7 +202,14 @@
         new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(
           (row.item.checkout_price_cents ?? row.item.price_cents) / 100)
     })), '');
-    byId('nk-checkout-button').disabled = !TEST_ONLY || catalogue.length === 0 || !studioChoice;
+    const checkoutAvailable = TEST_ONLY && checkoutCapabilities?.testMode === true &&
+      checkoutCapabilities?.webCheckoutEnabled === true;
+    byId('nk-checkout-button').disabled = !checkoutAvailable ||
+      catalogue.length === 0 || !studioChoice;
+    const availability = byId('nk-checkout-availability');
+    if (availability) availability.textContent = checkoutAvailable
+      ? 'Stripe-Testbuchungen sind serverseitig freigeschaltet. Es werden keine Live-Zahlungen durchgeführt.'
+      : 'Testbuchungen sind noch nicht freigeschaltet. Du kannst Tarife und Kontostand trotzdem ansehen.';
     showAccount(true);
     if (new URLSearchParams(window.location.search).get('status') === 'success') {
       feedback('Zurück vom Stripe-Testcheckout. Eine Weiterleitung ist kein Zahlungsnachweis. Der Kontostatus wird ausschließlich serverseitig geführt.');
@@ -265,7 +274,8 @@
   }
   async function startTestCheckout() {
     await run(async () => {
-      if (!TEST_ONLY || !session || !studioChoice) throw new Error('Testbuchung nicht verfügbar.');
+      if (!TEST_ONLY || !session || !studioChoice ||
+          byId('nk-checkout-button').disabled) throw new Error('Testbuchung nicht verfügbar.');
       const row = catalogue[Number(byId('nk-offer-select').value)];
       if (!row) throw new Error('Bitte einen Tarif oder Pass auswählen.');
       if (!window.crypto?.randomUUID) throw new Error('Sicherer Browser für Testcheckout erforderlich.');

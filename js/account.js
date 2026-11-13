@@ -392,6 +392,17 @@
       feedback('Wenn das Konto existiert und der Mailversand eingerichtet ist, erhältst du eine E-Mail.');
     });
   }
+  async function resendSignupConfirmation(event) {
+    event.preventDefault();
+    await run(async () => {
+      const email = String(event.currentTarget.elements.email.value ?? '').trim();
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error('Bitte eine gültige E-Mail-Adresse eingeben.');
+      }
+      await request('/auth/v1/resend',{method:'POST',body:{type:'signup',email}});
+      feedback('Wenn eine Bestätigung aussteht und die E-Mail-Zustellung eingerichtet ist, erhältst du eine weitere Nachricht.');
+    });
+  }
   async function saveStudio() {
     await run(async () => {
       if (!activeUser || !session) throw new Error('Bitte erneut anmelden.');
@@ -447,6 +458,7 @@
     if (!byId('nk-login-panel')) return;
     byId('nk-login-form').addEventListener('submit',event=>{void login(event);});
     byId('nk-reset-form').addEventListener('submit',event=>{void reset(event);});
+    byId('nk-confirmation-form').addEventListener('submit',event=>{void resendSignupConfirmation(event);});
     byId('nk-studio-save').addEventListener('click',()=>{void saveStudio();});
     byId('nk-checkout-button').addEventListener('click',()=>{void startTestCheckout();});
     byId('nk-web-shop-checkout').addEventListener('click',()=>{void startShopTestCheckout();});

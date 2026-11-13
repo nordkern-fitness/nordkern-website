@@ -42,6 +42,15 @@
             <button type="submit" class="nk-account-subtle">Zurücksetzen</button>
           </div>
         </form>
+        <form id="nk-confirmation-form" class="nk-account-reset">
+          <label for="nk-confirmation-email">Bestätigungs-E-Mail nicht angekommen?</label>
+          <div class="nk-account-inline">
+            <input type="email" id="nk-confirmation-email" name="email"
+              placeholder="E-Mail-Adresse" autocomplete="email" maxlength="254" required />
+            <button type="submit" class="nk-account-subtle">Erneut anfordern</button>
+          </div>
+          <p class="nk-account-hint">Eine neue Bestätigung wird nur bei einem ausstehenden Konto und eingerichteter Mailzustellung versendet.</p>
+        </form>
       </section>
 
       <section id="nk-member-panel" hidden aria-label="Dein Mitgliederkonto">

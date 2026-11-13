@@ -88,3 +88,22 @@ test('email confirmation resend is a separate non-registration GoTrue operation'
   assert.match(source,/wenn eine Bestätigung aussteht/i);
   assert.doesNotMatch(html,/<form[^>]*id="nk-signup-form"/);
 });
+
+test('test billing portal cannot redirect members to arbitrary destinations',()=>{
+  const {safeBillingPortalUrl}=loadAccount();
+  assert.equal(safeBillingPortalUrl('https://billing.stripe.com/p/session/test_verified'),true);
+  for(const url of [
+    'http://billing.stripe.com/session',
+    'https://billing.stripe.com.evil.invalid/',
+    'https://checkout.stripe.com/',
+    'https://person@billing.stripe.com/',
+    null
+  ])assert.equal(safeBillingPortalUrl(url),false);
+});
+test('billing portal remains disabled until authenticated server confirms test mode',()=>{
+  assert.match(html,/id="nk-billing-portal" disabled/);
+  assert.match(source,/\/functions\/v1\/create-test-billing-portal/);
+  assert.match(source,/returnSurface:'web'/);
+  assert.match(source,/!webCheckoutEnabled \|\| !session \|\| !activeUser/);
+  assert.doesNotMatch(source,/sk_live_|STRIPE_SECRET_KEY|SERVICE_ROLE_KEY/);
+});

@@ -33,6 +33,14 @@
         !url.username && !url.password;
     } catch { return false; }
   }
+  function safeBillingPortalUrl(value) {
+    if (typeof value !== 'string' || value.length > 4096) return false;
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' && url.hostname === 'billing.stripe.com' &&
+        !url.username && !url.password && !url.hash;
+    } catch { return false; }
+  }
   function paidMembership(m, now) {
     const end = Date.parse(m?.current_period_end ?? '');
     const start = Date.parse(m?.starts_at ?? '');
@@ -212,6 +220,7 @@
     webCheckoutEnabled = checkoutAvailable;
     byId('nk-checkout-button').disabled = !checkoutAvailable ||
       catalogue.length === 0 || !studioChoice;
+    byId('nk-billing-portal').disabled = !checkoutAvailable;
     const availability = byId('nk-checkout-availability');
     if (availability) availability.textContent = checkoutAvailable
       ? 'Stripe-Testbuchungen sind serverseitig freigeschaltet. Es werden keine Live-Zahlungen durchgeführt.'
@@ -363,7 +372,7 @@
     }
     finally { busy = false; buttons.forEach(button => {
       if (button.id === 'nk-studio-save' || button.id === 'nk-checkout-button' ||
-          button.id === 'nk-web-shop-checkout') return;
+          button.id === 'nk-web-shop-checkout' || button.id === 'nk-billing-portal') return;
       button.disabled = false;
     }); }
   }
@@ -419,6 +428,20 @@
       feedback('Studioänderung serverseitig bestätigt.');
     });
   }
+  async function openTestBillingPortal() {
+    await run(async () => {
+      if (!TEST_ONLY || !webCheckoutEnabled || !session || !activeUser) {
+        throw new Error('Stripe-Testabrechnung ist derzeit nicht freigeschaltet.');
+      }
+      const result = await authorized('/functions/v1/create-test-billing-portal', {
+        method:'POST', body:{returnSurface:'web'}
+      });
+      if (result?.testMode !== true || !safeBillingPortalUrl(result?.url)) {
+        throw new Error('Sicherer Stripe-Testportal-Link wurde nicht bestätigt.');
+      }
+      window.location.assign(result.url);
+    });
+  }
   async function startTestCheckout() {
     await run(async () => {
       if (!TEST_ONLY || !session || !studioChoice || !webCheckoutEnabled)
@@ -461,12 +484,14 @@
     byId('nk-confirmation-form').addEventListener('submit',event=>{void resendSignupConfirmation(event);});
     byId('nk-studio-save').addEventListener('click',()=>{void saveStudio();});
     byId('nk-checkout-button').addEventListener('click',()=>{void startTestCheckout();});
+    byId('nk-billing-portal').addEventListener('click',()=>{void openTestBillingPortal();});
     byId('nk-web-shop-checkout').addEventListener('click',()=>{void startShopTestCheckout();});
     byId('nk-orders-reload').addEventListener('click',()=>{void run(loadAccount);});
     byId('nk-password-change-form').addEventListener('submit',event=>{void changeOwnPassword(event);});
     byId('nk-logout').addEventListener('click',()=>{void logout();});
     byId('nk-reload').addEventListener('click',()=>{void run(loadAccount);});
     byId('nk-checkout-button').disabled=true;
+    byId('nk-billing-portal').disabled=true;
     byId('nk-web-shop-checkout').disabled=true;
     try {
       const cached = JSON.parse(sessionStorage.getItem(KEY) ?? 'null');
@@ -481,6 +506,6 @@
       await run(loadAccount);
     } else showAccount(false);
   }
-  window.NordkernAccount = {validSession,safeCheckoutUrl,paidMembership,mount};
+  window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,paidMembership,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

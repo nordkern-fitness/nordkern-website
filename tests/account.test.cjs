@@ -78,3 +78,13 @@ test('test checkout requires positive server capability, never only local browse
   assert.match(html,/id="nk-checkout-availability"/);
   assert.match(source,/\.catch\(\(\) => \(\{webCheckoutEnabled:false\}\)\)/);
 });
+
+test('email confirmation resend is a separate non-registration GoTrue operation',()=>{
+  assert.match(html,/id="nk-confirmation-form"/);
+  assert.match(html,/id="nk-confirmation-email"/);
+  assert.match(source,/\/auth\/v1\/resend/);
+  assert.match(source,/type:'signup',email/);
+  assert.match(source,/nk-confirmation-form/);
+  assert.match(source,/wenn eine Bestätigung aussteht/i);
+  assert.doesNotMatch(html,/<form[^>]*id="nk-signup-form"/);
+});

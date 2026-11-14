@@ -30,3 +30,28 @@
 .nk-account-reset{margin-top:2rem}
 @media(max-width:720px){.nk-account-grid{grid-template-columns:1fr;gap:0}.nk-account-head-row{flex-direction:column}.nk-account-inline{flex-direction:column;align-items:stretch}.nk-account-inline button{width:100%}}
 @media(prefers-reduced-motion:reduce){.nk-account-panel button{transition:none}}
+
+/* Authenticated device-revocation list. No raw device secret is rendered. */
+.nk-own-device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(63, 96, 73, .17);
+  padding: .85rem 0;
+}
+.nk-own-device-row p {
+  margin: 0;
+  min-width: 12rem;
+  flex: 1 1 16rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.nk-own-device-row button {
+  min-height: 44px;
+}
+@media (max-width: 650px) {
+  .nk-own-device-row { align-items: stretch; flex-direction: column; }
+  .nk-own-device-row button { width: 100%; }
+}

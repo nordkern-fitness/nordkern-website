@@ -140,3 +140,16 @@ test('web contract clearly reflects Stripe portal cancellation and withdrawal',(
  assert.doesNotMatch(contractStatusLabel({...contract,cancellation_effective_at:null},now),
   /Kündigung vorgemerkt/);
 });
+
+test('member device management uses scoped RLS reads and authenticated revoke RPC',()=>{
+ assert.match(html,/id="nk-own-devices"/);
+ assert.match(html,/id="nk-own-devices-reload"/);
+ assert.match(source,/\/rest\/v1\/devices\?select=id,user_id,platform,last_seen_at,trusted_at,revoked_at/);
+ assert.match(source,/&user_id=eq.'\+/);
+ assert.match(source,/\/rest\/v1\/rpc\/revoke_own_device/);
+ assert.match(source,/p_device_id:device\.id/);
+ assert.match(source,/window\.confirm\('QR-Zutritt/);
+ assert.match(source,/item\.user_id!==userId/);
+ assert.doesNotMatch(source,/devices\?select=\*/);
+ assert.doesNotMatch(source,/credential_hash|device_credential|service_role/);
+});

@@ -1,6 +1,6 @@
 # NORDKERN FITNESS · MASTER PROGRESS
 
-**Stand:** 14. November 2026 · nach unabhängiger GitHub-/Supabase-Prüfung.  
+**Stand:** 14. November 2026 · nach unabhängiger GitHub-/Supabase-Prüfung.  \n**Aktueller überprüfter Implementierungsstand (14.11.2026):** App `e67382ce` (App/Edge-CI grün), Website `dae368f4` (Website-CI grün). Stripe-Webhook `nordkern-dev` v12 aktiv. Doku-Commits können die nachstehend genannten Implementierungs-HEADs fortschreiben.\n\n
 **Status:** In Entwicklung; ausdrücklich **nicht produktionsreif**.  
 **Branches:** App `feature/staff-studio-access-2026-11-12` / PR [#4](https://github.com/nordkern-fitness/nordkern-app/pull/4); Website `fix/hash-navigation-safety-2026-11-12` / PR [#3](https://github.com/nordkern-fitness/nordkern-website/pull/3). Beide offen, Draft, nicht gemergt.
 
@@ -33,7 +33,7 @@
 | --- | ---: | --- |
 | create-offer-checkout | 10 | ACTIVE, echte Byte-Limits, JWT |
 | create-shop-checkout | 2 | ACTIVE, echte Byte-Limits, JWT |
-| stripe-webhook | 11 | ACTIVE |
+| stripe-webhook | 12 | ACTIVE, Kündigungsabgleich aus aktuellem Stripe-Status, HMAC erforderlich |
 | issue-access-token | 8 | ACTIVE, echte Byte-Limits, JWT |
 | verify-access-token | 8 | ACTIVE |
 | cancel-membership | 5 | ACTIVE |
@@ -100,3 +100,20 @@
 **Offen nach Priorität:** Echte signierte Stripe-Testzahlungen und zugestellte Webhooks (kein autorisierter Stripe-Testkontozugriff nachgewiesen), E-Mail-Bestätigungszustellung und native Geräteabnahme, physische Reader-/Türabnahme, produktive Vertrags-/Rechnungs- und Rechtstexte. Sichere Teilintegrationen und echte Dev-DB-Tests ersetzen keine Endabnahme. Produktive Zahlungen/Türen bleiben unangetastet.
 
 **Nächste konkrete Aktion:** Stripe-Webhook-Ereignisreihenfolge für Registrierung/Erstzahlung/Renewal mit autoritativer Periodenprüfung gezielt reviewen, unzuverlässige Doppel-/Späterereignisse durch zusätzliche signierte Testfälle abdecken, weiter UI/Shop und Auth konsolidieren; nicht unnötig bestandene Tests wiederholen.
+
+## Fortsetzung 7.0 – signierter Stripe-Test-Webhook, Kündigungsabgleich und letzte UI-Integration (14.11.2026)
+
+**Verifizierte Implementierungs-Commits vor diesem Doku-Commit:** App `e67382ce88330fb4c64da94be1e71b2da51c87e1`, Website `dae368f4ce32bdd345e7228052c03002428f3c30`. Beide PRs #4/#3 weiterhin offen/Draft, nicht gemergt.
+
+**CI/Nachweise:**
+- App FDS `43572299467` **SUCCESS**, Edge `43572299463` und `43572295713` **SUCCESS** für `e67382ce`.
+- Website Quality `43572124294` **SUCCESS** für `dae368f4`.
+- Stripe-Webhook-Code wurde nach erfolgreicher CI aus App-PR #4 in `nordkern-dev` als `stripe-webhook` **v12 ACTIVE** bereitgestellt (`verify_jwt=false` für Stripe-HMAC, eigene Signature-Prüfung zwingend). **Kein produktives Stripe- oder Tür-Deployment.**
+- Erweiterte signierte Deno-Webhooktests: Ein bezahlter Checkout erzeugt den Vertrag; `invoice.paid` gewährt einmalig Rechnungscredits, selbst bei gleicher/erneut zugestellter Rechnung. Trifft `invoice.paid` vor der Checkout-Vertragsanlage ein, wird das Ereignis nicht als erfolgreich verbucht; ein späterer Retry kann nach dem Checkout genau einmal buchen.
+- `customer.subscription.updated` gleicht eine Termin-Kündigung **und ihre Rücknahme** aus der aktuell erneut bei Stripe gelesenen Subscription ab. Der alte Webhook-Payload wird nicht als aktueller Vertragsstatus behandelt. Ein ungültiger expliziter Stripe-Zeitstempel führt zu einem retriable Fehler statt stiller Entfernung eines Kündigungsdatums.
+- App- und Website-Mitgliederansicht zeigen den wirksamen Kündigungstermin, sofern vorhanden, zusätzlich zu ursprünglichem Vertragspreis, Mindestlaufzeit und bezahltem Zeitraum. Website-/App-Tests dafür erfolgreich.
+- Supabase-Sicherheitsadvisor (erneut auf DEV geprüft): 11 INFO `rls_enabled_no_policy` (teils absichtlich backend-only), 2 WARN `anon_security_definer_function_executable` (öffentliche Inhalte separat fachlich prüfen), 30 WARN `authenticated_security_definer_function_executable` (rollenbezogene Funktionen müssen weiter geprüft werden) und 1 WARN `auth_leaked_password_protection` (Auth-Projekteinstellung noch offen). Advisor-Hinweise nicht pauschal durch Freigaben beheben.
+
+**Externe und weiterhin tatsächliche Blockaden:** Kein direkt autorisiertes Stripe-Testkonto mit echter Testkarten-Zahlung/Webhook-Zustellung im Ausführungszugang, keine vollständige reale Auth-Mail-Zustellung, keine iOS-/Android-Geräteabnahme und keine physische Reader-/Türintegration. CI und SQL-Rollbacktests sind nicht der Nachweis einer echten Zahlung oder produktiven Fertigstellung.
+
+**Nächste konkrete Arbeit:** Weitere Stripe-Kündigungs- und Fehlerzustände sicher als Integration prüfen, kontrollierte Testrechnungs-/Belegansicht sowie Shop-Fehlerzustände prüfen, Supabase Advisor-Funde nach Risiko priorisieren; nach Zugang zu Stripe-Testkonto echten Testcheckout mit echten signierten Events abnehmen. Nie Live-Zahlungen/Türen aktivieren.

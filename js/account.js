@@ -64,6 +64,10 @@
     if (typeof minimumEnd === 'string' && Number.isFinite(Date.parse(minimumEnd))) {
       details.push('Mindestlaufzeit bis: ' + date(minimumEnd));
     }
+    const cancellation = m?.cancellation_effective_at;
+    if (typeof cancellation === 'string' && Number.isFinite(Date.parse(cancellation))) {
+      details.push('Kündigung vorgemerkt zum: ' + date(cancellation));
+    }
     return details.join(' · ');
   }
   function paidMembership(m, now) {

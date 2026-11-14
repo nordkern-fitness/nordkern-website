@@ -38,7 +38,7 @@
 | cancel-membership | 5 | ACTIVE |
 | create-checkout-session (Legacy, HTTP 410) | 5 | ACTIVE, gesperrt |
 | create-billing-portal (Legacy, HTTP 410) | 3 | ACTIVE, gesperrt |
-| create-test-billing-portal | — | **Quellcode und Tests committed, noch nicht deployed** |
+| create-test-billing-portal | 1 | ACTIVE, verify_jwt=true, nur mit Stripe-Testschlüssel nutzbar |
 
 ## Abgeschlossene und verifizierte Abschnitte
 
@@ -60,10 +60,17 @@
 
 ## Nächste konkrete Entwicklungsaktionen (Priorität)
 
-1. `create-test-billing-portal` nach Sicherheitsprüfung und erfolgreichen Deno-Tests **nur nach `nordkern-dev` deployen**; keine Live-Schlüssel akzeptieren; PR/CI danach verifizieren.
+1. Testportal v1 wurde nach erfolgreichen Deno-Tests in `nordkern-dev` bereitgestellt (nur Testschlüssel, JWT erforderlich). Nächster Schritt: weitere sichere Integrations- und Datenbanktests, kein echter Stripe-Karten-Test ohne angebundenes Testkonto.
 2. Automatisierte echte Datenbank-Integrationschecks für Leser/QR/Vertragsstatus weiter ausbauen, besonders Stornos, Fehler, Event-Reihenfolge, verifizierte RLS und ungewöhnliche Grenzfälle.
 3. Shop-Bestand/Reservierung physischer Waren transaktionssicher entwerfen und erst dann freischalten; Rechnungs-/Steuer- und Refund-Workflow fachlich prüfen.
 4. Auth, Versand von Bestätigungs-Mails, Stripe-Testkonto und iOS/Android separat E2E abnehmen, sobald externe Zugänge vorliegen.
 5. App und Website auf verbliebene funktionslose Oberflächen, Barrierefreiheit und konsistente Tarifpreise prüfen. Beide PRs offen lassen, bis Freigabevoraussetzungen erfüllt sind.
 
 **Sicherheit:** Kein `.env`, Service-Role-Key, Stripe-Secret, Reader-Klartext, Live-Zahlung oder echte Türfreigabe im Repository. Datenbanktests mit Rollback. Keine Behauptung vollständiger Produktionsreife.
+
+## Fortsetzung 6.0 – geprüfter Abschnitt (14.11.2026)
+
+- Das Testabrechnungsportal `create-test-billing-portal` wurde als **v1 ACTIVE mit `verify_jwt=true`** aus dem App-Entwicklungsbranch bereitgestellt. Dies ist ein Deploy-Nachweis, **kein Nachweis eines realen Stripe-Testkunden oder einer erfolgreichen externen Stripe-Portalsitzung**.
+- Eingangsstand App `cae10dbc`, Website `29aa3cad` mit CI-Erfolg geprüft; dieses Dokument erzeugte anschließend die gespeicherten Commits App `9e2f7033963e861bab089282cf34f7f664b826c2`, Website `49f4d608ad86bf9afaff546079de2d5684a813c7`.
+- Blockade für echte externe Zahlung: kein in der Sitzung authentifiziertes Stripe-Testkonto/Testzahlungs-Event. Weiter ohne Live-Zahlungen und produktive Reader.
+- **Nächste Aktion:** Testportal- und Reader-Sicherheitsgrenzen einschließlich Fehlerbehandlung prüfen, CI erneut abwarten; DB-Rollbacktests erweitern.

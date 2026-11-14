@@ -128,3 +128,15 @@ test('existing web contracts show purchased snapshot price, not mutable catalogu
     pricing_snapshot:{plan_name:'TEST',billing_interval:'month'}},now);
   assert.doesNotMatch(malformed,/Vertragspreis:/);
 });
+
+test('web contract clearly reflects Stripe portal cancellation and withdrawal',()=>{
+ const {contractStatusLabel}=loadAccount();
+ const contract={status:'active',starts_at:new Date(now-1000).toISOString(),
+  current_period_end:new Date(now+86400000).toISOString(),
+  cancellation_effective_at:new Date(now+43200000).toISOString(),
+  minimum_term_ends_at:null,contract_price_cents:2990,currency:'eur',
+  pricing_snapshot:{plan_name:'Basic Altvertrag',billing_interval:'month'}};
+ assert.match(contractStatusLabel(contract,now),/Kündigung vorgemerkt zum:/);
+ assert.doesNotMatch(contractStatusLabel({...contract,cancellation_effective_at:null},now),
+  /Kündigung vorgemerkt/);
+});

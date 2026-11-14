@@ -252,6 +252,12 @@
       ? 'Stripe-Testbuchungen sind serverseitig freigeschaltet. Es werden keine Live-Zahlungen durchgeführt.'
       : 'Testbuchungen sind noch nicht freigeschaltet. Du kannst Tarife und Kontostand trotzdem ansehen.';
     showAccount(true);
+    void loadOwnDevices(user).catch(error=>{
+      if(session?.userId===user && activeUser===user){
+        byId('nk-own-devices').textContent=error instanceof Error
+          ? error.message : 'Geräteliste konnte nicht geprüft werden.';
+      }
+    });
     await loadShopAccount(checkoutAvailable,user);
     if (new URLSearchParams(window.location.search).get('status') === 'success') {
       feedback('Zurück vom Stripe-Testcheckout. Eine Weiterleitung ist kein Zahlungsnachweis. Der Kontostatus wird ausschließlich serverseitig geführt.');
@@ -266,6 +272,58 @@
     if (textValue !== undefined) node.textContent = String(textValue);
     return node;
   };
+  async function loadOwnDevices(userId){
+    if(!session || session.userId!==userId || activeUser!==userId || !UUID.test(userId))
+      throw new Error('Bitte erneut anmelden, um Geräte zu verwalten.');
+    const area=byId('nk-own-devices');
+    area.textContent='Geräteberechtigungen werden vom Server geprüft.';
+    const devices=await authorized('/rest/v1/devices?select=id,user_id,platform,last_seen_at,trusted_at,revoked_at&user_id=eq.'+
+      userId+'&order=created_at.desc&limit=20');
+    if(!session || session.userId!==userId || activeUser!==userId)return;
+    if(!Array.isArray(devices)||devices.length>20||devices.some(item=>
+       !UUID.test(item?.id)||item.user_id!==userId||
+       !['ios','android'].includes(item.platform)||
+       typeof item.last_seen_at!=='string'||
+       !Number.isFinite(Date.parse(item.last_seen_at))||
+       (item.revoked_at!==null && (typeof item.revoked_at!=='string'||
+         !Number.isFinite(Date.parse(item.revoked_at))))||
+       (item.trusted_at!==null && (typeof item.trusted_at!=='string'||
+         !Number.isFinite(Date.parse(item.trusted_at))))))
+      throw new Error('Geräteliste wurde nicht sicher bestätigt.');
+    area.replaceChildren();
+    if(!devices.length){
+      area.appendChild(element('p','Noch keine registrierten Geräte vorhanden.'));
+      return;
+    }
+    for(const device of devices){
+      const row=element('div');
+      row.className='nk-own-device-row';
+      const label=element('p',(device.platform==='ios'?'iPhone / iOS':'Android')+
+        ' · Zuletzt verbunden: '+date(device.last_seen_at)+
+        (device.revoked_at?' · Gesperrt seit '+date(device.revoked_at):
+          device.trusted_at?' · QR-Zutritt aktiv':' · Noch nicht bestätigt'));
+      row.appendChild(label);
+      if(device.revoked_at===null){
+        const button=element('button','Diesen QR-Geräteschlüssel sperren');
+        button.type='button';button.className='nk-account-subtle';
+        button.setAttribute('aria-label','QR-Zutritt für '+device.platform+' Gerät widerrufen');
+        button.addEventListener('click',()=>{void run(async()=>{
+          if(!window.confirm('QR-Zutritt für dieses Gerät sofort sperren? Eine erneute Registrierung ist danach erforderlich.'))return;
+          const result=await authorized('/rest/v1/rpc/revoke_own_device',{
+            method:'POST',body:{p_device_id:device.id}
+          });
+          if(result!==true && result!==false)
+            throw new Error('Gerätesperre wurde nicht bestätigt.');
+          await loadOwnDevices(userId);
+          feedback(result===true
+            ?'QR-Zutritt dieses Geräts wurde serverseitig gesperrt.'
+            :'Dieses Gerät war bereits gesperrt.');
+        });});
+        row.appendChild(button);
+      }
+      area.appendChild(row);
+    }
+  }
   async function loadShopAccount(canCheckout,userId) {
     const display=byId('nk-web-shop-cart');
     const status=byId('nk-web-shop-checkout-status');
@@ -513,6 +571,12 @@
     byId('nk-billing-portal').addEventListener('click',()=>{void openTestBillingPortal();});
     byId('nk-web-shop-checkout').addEventListener('click',()=>{void startShopTestCheckout();});
     byId('nk-orders-reload').addEventListener('click',()=>{void run(loadAccount);});
+    byId('nk-own-devices-reload').addEventListener('click',()=>{
+      void run(async()=>{
+        if(!session||!activeUser)throw new Error('Bitte anmelden.');
+        await loadOwnDevices(activeUser);
+      });
+    });
     byId('nk-password-change-form').addEventListener('submit',event=>{void changeOwnPassword(event);});
     byId('nk-logout').addEventListener('click',()=>{void logout();});
     byId('nk-reload').addEventListener('click',()=>{void run(loadAccount);});

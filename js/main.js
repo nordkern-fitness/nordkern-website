@@ -285,6 +285,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  // Resolve URL fragments by ID, never as a CSS selector. Encoded characters and
+  // malformed fragments must not crash the page or alter a different selector.
+  const safeHashTarget = (hash) => {
+    if (typeof hash !== "string" || !hash.startsWith("#") || hash.length > 2048) return null;
+    try {
+      const id = decodeURIComponent(hash.slice(1));
+      if (!id || id.length > 512 || /[\u0000-\u001f\u007f]/.test(id)) return null;
+      return document.getElementById(id);
+    } catch {
+      return null;
+    }
+  };
+
   const getSamePageHashTarget = (href) => {
     if (!href || !href.includes("#")) return null;
 
@@ -298,7 +311,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (!isSamePage) return null;
 
-      return document.querySelector(targetUrl.hash);
+      return safeHashTarget(targetUrl.hash);
     } catch (error) {
       return null;
     }
@@ -965,13 +978,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!window.location.hash) return;
 
     const hash = window.location.hash;
-    const target = document.querySelector(hash);
+    const target = safeHashTarget(hash);
 
     if (!target) return;
 
-    const isPricingPlanHash = document.querySelector(
-      `${selectors.pricingTabButton}[data-plan="${hash.replace("#", "")}"]`
-    );
+    const hashId = decodeURIComponent(hash.slice(1));
+    const isPricingPlanHash = Array.from(document.querySelectorAll(selectors.pricingTabButton))
+      .some(button => button.dataset.plan === hashId);
 
     if (isPricingPlanHash) return;
 

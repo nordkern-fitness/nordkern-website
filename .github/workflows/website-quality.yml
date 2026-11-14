@@ -26,6 +26,10 @@ jobs:
         run: |
           node --check js/main.js
           node --check js/catalog.js
+          node --check js/studios.js
+          node --check js/account.js
+          node --check js/shop.js
+          node --check js/shop-cart.js
 
       - name: Test public catalogue client
         run: node --test tests/*.test.cjs
@@ -38,5 +42,19 @@ jobs:
         with:
           name: Nordkern-Website-Vorschau
           path: preview/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Package complete versioned website source
+        run: |
+          mkdir -p release
+          git archive --format=zip --output=release/Nordkern-Website-Source.zip HEAD
+          unzip -t release/Nordkern-Website-Source.zip
+
+      - name: Upload complete website source
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nordkern-Website-Source
+          path: release/Nordkern-Website-Source.zip
           if-no-files-found: error
           retention-days: 14

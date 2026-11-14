@@ -235,5 +235,5 @@
     }
   }
 
-  window.NordkernCatalog = { mount, loadCatalogue, validProduct };
+  window.NordkernCatalog = { mount, loadCatalogue, validProduct, publicConfig: CONFIG };
 })();

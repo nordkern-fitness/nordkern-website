@@ -107,3 +107,24 @@ test('billing portal remains disabled until authenticated server confirms test m
   assert.match(source,/!webCheckoutEnabled \|\| !session \|\| !activeUser/);
   assert.doesNotMatch(source,/sk_live_|STRIPE_SECRET_KEY|SERVICE_ROLE_KEY/);
 });
+
+test('existing web contracts show purchased snapshot price, not mutable catalogue prices',()=>{
+  const {contractStatusLabel}=loadAccount();
+  const contract={status:'active',starts_at:new Date(now-86400000).toISOString(),
+    current_period_end:new Date(now+86400000).toISOString(),
+    cancellation_effective_at:null,minimum_term_ends_at:'2027-11-12T10:00:00Z',
+    contract_price_cents:2990,currency:'eur',
+    pricing_snapshot:{plan_name:'Basic Altvertrag',billing_interval:'month',
+      monthly_credits:{drinks:3,creatine:1}}};
+  const before=contractStatusLabel(contract,now);
+  assert.match(before,/Basic Altvertrag/);
+  assert.match(before,/29,90/);
+  assert.match(before,/Mindestlaufzeit/);
+  assert.match(before,/Bezahlte Mitgliedschaft/);
+  const unrelatedNewCataloguePrice=9990;
+  assert.notEqual(contract.contract_price_cents,unrelatedNewCataloguePrice);
+  assert.equal(contractStatusLabel(contract,now),before);
+  const malformed=contractStatusLabel({...contract,contract_price_cents:-100,
+    pricing_snapshot:{plan_name:'TEST',billing_interval:'month'}},now);
+  assert.doesNotMatch(malformed,/Vertragspreis:/);
+});

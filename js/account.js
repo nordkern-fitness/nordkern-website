@@ -41,6 +41,31 @@
         !url.username && !url.password && !url.hash;
     } catch { return false; }
   }
+  /** A purchased membership retains its original price and features snapshot.
+   * Never display current catalogue prices as an existing member's contract. */
+  function contractStatusLabel(m, now) {
+    const details = [
+      paidMembership(m,now) ? 'Bezahlte Mitgliedschaft' : 'Nicht als bezahlt freigegeben',
+      'Status: ' + String(m?.status ?? 'unbekannt'),
+      'Bezahlt bis: ' + date(m?.current_period_end)
+    ];
+    const name = m?.pricing_snapshot?.plan_name;
+    if (typeof name === 'string' && name.trim().length > 0 && name.length <= 160) {
+      details.push('Tarif: ' + name.trim());
+    }
+    const amount = m?.contract_price_cents;
+    if (Number.isSafeInteger(amount) && amount > 0 && m?.currency === 'eur') {
+      const formatted = new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'})
+        .format(amount/100);
+      details.push('Vertragspreis: ' + formatted +
+        (m?.pricing_snapshot?.billing_interval === 'month' ? ' monatlich' : ''));
+    }
+    const minimumEnd = m?.minimum_term_ends_at;
+    if (typeof minimumEnd === 'string' && Number.isFinite(Date.parse(minimumEnd))) {
+      details.push('Mindestlaufzeit bis: ' + date(minimumEnd));
+    }
+    return details.join(' · ');
+  }
   function paidMembership(m, now) {
     const end = Date.parse(m?.current_period_end ?? '');
     const start = Date.parse(m?.starts_at ?? '');
@@ -166,7 +191,7 @@
     const [profiles, selections, memberships, passes, wallets, studioList, offers, checkoutCapabilities] = await Promise.all([
       authorized('/rest/v1/profiles?select=id,member_id,first_name,last_name,account_enabled&id=eq.' + user + '&limit=1'),
       authorized('/rest/v1/member_studios?select=studio_id,change_allowed_at&user_id=eq.' + user + '&limit=1'),
-      authorized('/rest/v1/memberships?select=id,status,starts_at,current_period_end,cancellation_effective_at&user_id=eq.' + user + '&limit=30'),
+      authorized('/rest/v1/memberships?select=id,status,starts_at,current_period_end,cancellation_effective_at,minimum_term_ends_at,contract_price_cents,currency,pricing_snapshot&user_id=eq.' + user + '&limit=30'),
       authorized('/rest/v1/passes?select=id,title,status,starts_at,expires_at&user_id=eq.' + user + '&limit=50'),
       authorized('/rest/v1/wallet_balances?select=drinks,additional_drinks,creatine,protein&user_id=eq.' + user + '&limit=1'),
       authorized('/rest/v1/studios?select=id,name,slug,active&active=eq.true&order=name.asc&limit=50'),
@@ -199,10 +224,7 @@
     if (locked) byId('nk-studio-status').textContent +=
       ' · Nächster Wechsel frühestens ' + date(studioChoice.change_allowed_at);
     const messages = [];
-    for (const m of memberships) messages.push(
-      (paidMembership(m, Date.now()) ? 'Bezahlte Mitgliedschaft' : 'Nicht als bezahlt freigegeben') +
-      ' · Status: ' + String(m.status) + ' · Bezahlt bis: ' + date(m.current_period_end)
-    );
+    for (const m of memberships) messages.push(contractStatusLabel(m,Date.now()));
     for (const p of passes) messages.push(String(p.title) + ' · ' + String(p.status) +
       ' · Endet: ' + date(p.expires_at));
     const wallet = wallets[0];
@@ -506,6 +528,6 @@
       await run(loadAccount);
     } else showAccount(false);
   }
-  window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,paidMembership,mount};
+  window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,paidMembership,contractStatusLabel,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

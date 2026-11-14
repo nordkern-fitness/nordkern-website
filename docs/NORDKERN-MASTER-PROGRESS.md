@@ -25,20 +25,21 @@
 - `20261113143907` allow_safe_stale_staff_studio_assignment_revocation
 - `20261113144308` deny_historical_pass_member_scope_leak
 - `20261113145311` isolate_qr_readers_by_studio
+- `20261114062638` disabled_accounts_never_have_staff_roles
 
 ## Bereitgestellte Edge Functions (aus Projektabfrage)
 
 | Funktion | Version | Status |
 | --- | ---: | --- |
-| create-offer-checkout | 9 | ACTIVE |
-| create-shop-checkout | 1 | ACTIVE |
+| create-offer-checkout | 10 | ACTIVE, echte Byte-Limits, JWT |
+| create-shop-checkout | 2 | ACTIVE, echte Byte-Limits, JWT |
 | stripe-webhook | 11 | ACTIVE |
-| issue-access-token | 7 | ACTIVE |
+| issue-access-token | 8 | ACTIVE, echte Byte-Limits, JWT |
 | verify-access-token | 8 | ACTIVE |
 | cancel-membership | 5 | ACTIVE |
 | create-checkout-session (Legacy, HTTP 410) | 5 | ACTIVE, gesperrt |
 | create-billing-portal (Legacy, HTTP 410) | 3 | ACTIVE, gesperrt |
-| create-test-billing-portal | 1 | ACTIVE, verify_jwt=true, nur mit Stripe-Testschlüssel nutzbar |
+| create-test-billing-portal | 2 | ACTIVE, JWT und Stripe-Testschlüssel erforderlich |
 
 ## Abgeschlossene und verifizierte Abschnitte
 
@@ -74,3 +75,13 @@
 - Eingangsstand App `cae10dbc`, Website `29aa3cad` mit CI-Erfolg geprüft; dieses Dokument erzeugte anschließend die gespeicherten Commits App `9e2f7033963e861bab089282cf34f7f664b826c2`, Website `49f4d608ad86bf9afaff546079de2d5684a813c7`.
 - Blockade für echte externe Zahlung: kein in der Sitzung authentifiziertes Stripe-Testkonto/Testzahlungs-Event. Weiter ohne Live-Zahlungen und produktive Reader.
 - **Nächste Aktion:** Testportal- und Reader-Sicherheitsgrenzen einschließlich Fehlerbehandlung prüfen, CI erneut abwarten; DB-Rollbacktests erweitern.
+
+## Fortsetzung 6.0 – Integrations- und Sicherheitstests (14.11.2026)
+
+- **GitHub-Stand vor diesem Dokument-Update:** App `2f881bb6a274d9f227ce939a9233d8834f74fb34`, Website `ca72072bdf7c25522dd2903b1e53e55cc7127310`. PR #4/#3 weiterhin Draft und nicht gemergt.
+- **CI derselben App-SHA:** Nordkern FDS Quality `43566409820` SUCCESS; Edge Functions static check `43566409816` SUCCESS, Push-Edge `43566405715` SUCCESS. Website Quality `43565719419` SUCCESS für `ca72072b`.
+- **Reale DEV-PostgreSQL-Transaktionen mit Rollback:** `supabase/tests/qr_nonce_real_database_e2e.sql` prüft Pass, Nonce-Replay, Studios, Geräte, Kontosperre und Audit; `supabase/tests/qr_paid_membership_period_e2e.sql` prüft unbezahlte, bezahlte, gekündigte, pausierte, abgelaufene und zukünftige Mitgliedschaften; `supabase/tests/disabled_staff_role_revocation.sql` prüft drei aktive und deaktivierte Rollen. Alle drei bestanden. Die erste Erarbeitung des Nonce-Tests erkannte unzulässige Test-Hashzeichen; korrigierte gültige Hex-Tests bestanden.
+- **Neue Migration angewendet:** `20261114062638_disabled_accounts_never_have_staff_roles`. Zentrale Rollenfunktionen prüfen Kontosperren und sind nicht mehr direkt für `anon` aufrufbar.
+- **Edge JSON-Sicherheit:** Gemeinsamer `_shared/bounded-json.ts` mit Test für falsche `Content-Length`, echte Byte-Limits, beschädigtes UTF-8, Nicht-Objekt-JSON und fehlende Bodys. Erfolgreiche CI. Neue DEV-Deployments `create-test-billing-portal` v2, `create-shop-checkout` v2, `create-offer-checkout` v10, `issue-access-token` v8, jeweils `verify_jwt=true`.
+- **Advisor 14.11.2026:** öffentlich abrufbare Rollenprüfungen gezielt abgesichert; weitere RLS-/SECURITY-DEFINER-Hinweise müssen funktionsbezogen bewertet werden. Tabellen ohne RLS-Policy sind teilweise absichtlich service-role-only; keine pauschale öffentliche Policy hinzufügen. Referenz: https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable
+- **Nächste konkrete Aktion:** Prüfen, ob übrige administrative SECURITY-DEFINER-Funktionen Sperren und Studioberechtigungen korrekt erzwingen; Stripe-Live-E2E nur mit gültigem Testkonto, keine Test-Erfolge erfinden; weitere Website-/App-Geschäftsabläufe schließen. Physische QR-Hardware, echte Testzahlungen und E-Mail-Zustellung weiterhin nicht nachgewiesen.

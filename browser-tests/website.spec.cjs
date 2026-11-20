@@ -1,5 +1,5 @@
 const {test,expect}=require('@playwright/test');
-const {seed,installFixtures,PRODUCT}=require('./fixtures.cjs');
+const {installFixtures,fixtureState}=require('./fixtures.cjs');
 
 test.beforeEach(async({page})=>{
  await installFixtures(page);
@@ -48,11 +48,19 @@ test('signup validates fields and consent, uses real GoTrue HTTP contract, never
  await page.locator('#nk-signup-privacy').check();
  expect(await page.locator('#nk-signup-form').evaluate(form=>form.checkValidity())).toBe(true);
  await page.locator('#nk-signup-submit').click();
+ await page.waitForTimeout(180);
+ const signupProblem=await page.locator('#nk-account-error').innerText();
+ if(signupProblem)console.log('Mocked signup browser failure:',signupProblem);
+ console.log('Mocked signup request count:',fixtureState(page).signupResponses.length);
+ await expect(fixtureState(page).signupResponses.length).toBe(1);
  await expect(page.locator('#nk-login-form')).toBeVisible();
  await expect(page.locator('#nk-member-panel')).toBeHidden();
  await expect(page.locator('#nk-account-feedback')).toContainText('keine aktive Anmeldung');
- const calls=await page.evaluate(()=>window.__nordkern_noop||null);
- expect(calls).toBeNull();
+ const request=fixtureState(page).signupResponses[0];
+ expect(request.data.home_studio_slug).toBe('grevesmuehlen');
+ expect(request.data.terms_accepted).toBe(true);
+ expect(request.data.privacy_accepted).toBe(true);
+ expect(request.data.marketing_accepted).toBe(false);
  // The test network intercept is the only author of signup responses.
  // No real email, auth account or membership is created.
 });

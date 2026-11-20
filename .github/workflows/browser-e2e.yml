@@ -11,7 +11,7 @@ permissions:
 jobs:
   browser-e2e:
     name: Chromium mobile, tablet and desktop browser flows
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 18
     env:
       CI: 'true'

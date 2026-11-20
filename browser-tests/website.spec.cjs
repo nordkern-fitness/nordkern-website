@@ -223,7 +223,7 @@ test('8.6 forbidden RLS own profile request fails closed and removes local crede
  await page.locator('#nk-login-password').fill('safe-test-password-123');
  await page.locator('#nk-login-submit').click();
  await expect(page.locator('#nk-member-panel')).toBeHidden();
- await expect(page.locator('#nk-account-error')).toContainText('Berechtigung');
+ await expect(page.locator('#nk-account-error')).toContainText('Zugriff wurde verweigert');
  expect(await page.evaluate(()=>sessionStorage.getItem('nordkern-website-session-v1'))).toBeNull();
 });
 

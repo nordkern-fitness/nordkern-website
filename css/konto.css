@@ -55,3 +55,25 @@
   .nk-own-device-row { align-items: stretch; flex-direction: column; }
   .nk-own-device-row button { width: 100%; }
 }
+
+/* 8.4: structured account, interactive cart and accessible navigation. */
+.nk-account-shortcuts{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1.1rem}
+.nk-account-shortcuts a,.nk-account-link{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d2e1d6;border-radius:14px;min-height:45px;padding:.6rem 1rem;background:#edf5ef;color:#245f39;text-decoration:none;font-weight:650;line-height:1.35}
+.nk-account-shortcuts a:hover,.nk-account-link:hover{background:#dfeee2}
+.nk-account-shortcuts a:focus-visible,.nk-account-link:focus-visible{outline:3px solid #8ab99b;outline-offset:3px}
+.nk-account-link-secondary{background:#fff;color:#34433b}
+.nk-account-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin:.5rem 0 1.1rem}
+.nk-account-contract,.nk-account-order{padding:1rem;border:1px solid #e0eae2;border-radius:17px;background:#fcfdfc;margin:0 0 .85rem}
+.nk-account-contract h3{font-size:1.08rem;font-weight:720;letter-spacing:-.025em;margin:.4rem 0 .8rem;color:#1c3225}
+.nk-account-contract p,.nk-account-order p{margin:0 0 .55rem;color:#46594e;overflow-wrap:anywhere}
+.nk-account-contract p:last-child,.nk-account-order p:last-child{margin-bottom:0}
+.nk-account-status{display:inline-block;padding:.22rem .65rem;border-radius:999px;font-size:.8rem;font-weight:730;background:#f1f3f0;color:#485a4b}
+.nk-account-status[data-active="true"]{background:#e4f3e6;color:#205b38}
+.nk-account-cart-line{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;padding:.75rem 0;border-bottom:1px solid #e1e8e2}
+.nk-account-cart-line p{margin:0;flex:1 1 10rem;overflow-wrap:anywhere}
+.nk-account-cart-actions{display:flex;align-items:center;gap:.55rem}
+.nk-account-panel .nk-account-cart-actions button{margin:0;padding:.3rem .8rem;min-width:42px;min-height:42px}
+.nk-account-cart-actions span{font-variant-numeric:tabular-nums;min-width:1.4rem;text-align:center}
+.nk-account-order strong{display:block;margin-bottom:.45rem;color:#223b2b}
+#vertraege,#shop,#bestellungen,#geraete,#konto-sicherheit{scroll-margin-top:6.8rem}
+@media(max-width:720px){.nk-account-shortcuts a,.nk-account-actions a{flex:1 1 100%}.nk-account-cart-line{align-items:flex-start}.nk-account{padding-inline:.85rem}}

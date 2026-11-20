@@ -58,9 +58,11 @@ def main():
 <p>Diese Vorschau ist eine unveröffentlichte Arbeitsfassung. Sie ändert nichts an der echten Website.</p>
 <p><a href="index.html">Startseite ansehen</a> ·
 <a href="mitgliedschaften.html">Tarifseite ansehen</a> ·
-<a href="app.html">App-Seite ansehen</a></p>
+<a href="app.html">App-Seite ansehen</a> ·
+<a href="shop.html">Shop ansehen</a> ·
+<a href="konto.html">Mitgliederbereich ansehen</a></p>
 <p>Alle Seiten können ohne Terminal geöffnet werden.
-Der Live-Tarifkatalog benötigt allerdings Internet und eine funktionierende Verbindung zu Supabase.</p>
+Die Live-Kataloge benötigen Internet und eine Verbindung zu Supabase. Echte Kontoanmeldung und Stripe-Checkout müssen auf der freigegebenen Website getestet werden.</p>
 <p><strong>Hinweis:</strong> Formulare und geplante App-Funktionen sind nicht produktiv freigeschaltet.</p>
 </body></html>"""
     (DEST / "VORSCHAU-STARTEN.html").write_text(instructions, encoding="utf-8")

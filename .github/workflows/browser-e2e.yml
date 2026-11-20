@@ -1,0 +1,48 @@
+name: Nordkern Website Chromium E2E (mocked Supabase)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    name: Chromium mobile, tablet and desktop browser flows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      CI: 'true'
+    steps:
+      - name: Checkout website development branch
+        uses: actions/checkout@v4
+      - name: Install Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Playwright test runner (CI only)
+        run: npm install --no-save --no-package-lock @playwright/test@1.56.1
+      - name: Install real Chromium browser and required Linux libraries
+        run: npx playwright install --with-deps chromium
+      - name: Execute real Chromium user journeys with isolated mocked Backend
+        run: npx playwright test --config browser-tests/playwright.config.cjs
+      - name: Upload Chromium trace and screenshots when tests fail
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nordkern-chromium-failures
+          path: |
+            playwright-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Upload successful Chromium browser report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nordkern-chromium-report
+          path: playwright-report/
+          if-no-files-found: error
+          retention-days: 14

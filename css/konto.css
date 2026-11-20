@@ -1,0 +1,91 @@
+.nk-account{min-height:100vh;background:#f7f8f7;padding:clamp(7rem,12vw,10rem) 1.25rem 5rem;color:#1d2422}
+.nk-account-hero{text-align:center;max-width:850px;margin:0 auto 3rem}
+.nk-account-hero h1{font-weight:770;letter-spacing:-.065em;line-height:1.04;font-size:clamp(2.7rem,7vw,5rem);margin:.8rem 0 1.3rem}
+.nk-account-hero>p:last-child{max-width:650px;margin:0 auto;color:#5b6762;font-size:1.1rem;line-height:1.6}
+.nk-account-shell{width:min(100%,1100px);margin:auto}
+.nk-account-panel{background:white;border:1px solid #e2e7e3;border-radius:26px;padding:clamp(1.5rem,4vw,2.6rem);margin:0 0 1.25rem;box-shadow:0 12px 35px rgba(18,40,27,.035)}
+.nk-account-panel h2{font-size:clamp(1.65rem,3vw,2rem);letter-spacing:-.045em;line-height:1.2;margin:.5rem 0 1rem}
+.nk-account-panel p{color:#60706a;line-height:1.55;margin:0 0 1.2rem}
+.nk-account-panel label{display:block;font-weight:650;margin:1.2rem 0 .45rem}
+.nk-account-panel input,.nk-account-panel select{display:block;width:100%;background:#fbfdfb;border:1px solid #ccd6ce;border-radius:14px;padding:.93rem 1rem;color:#17211a;font:inherit;min-height:50px}
+.nk-account-panel input:focus-visible,.nk-account-panel select:focus-visible{outline:3px solid #aac9af;outline-offset:2px}
+.nk-account-panel button{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:0;border-radius:14px;background:#287043;color:#fff;font:inherit;font-weight:660;min-height:50px;padding:.8rem 1.3rem;cursor:pointer;margin-top:1rem;transition:transform .18s ease,background .18s ease}
+.nk-account-panel button:hover:not(:disabled){background:#205b37;transform:translateY(-1px)}
+.nk-account-panel button:focus-visible{outline:3px solid #9cbda1;outline-offset:3px}
+.nk-account-panel button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.nk-account-panel .nk-account-subtle{background:#edf4ee;color:#22603a}
+.nk-account-panel .nk-account-subtle:hover:not(:disabled){background:#e0ede2}
+.nk-account-panel form{max-width:540px}
+.nk-account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem}
+.nk-account-head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.nk-account-inline{display:flex;align-items:center;gap:.75rem}
+.nk-account-inline input{flex:1;min-width:0}
+.nk-account-inline button{margin:0}
+.nk-account-hint{font-size:.92rem;color:#65736a}
+.nk-account-test-note{background:#edf4ee;border:1px solid #d7e6d9;padding:1rem 1.25rem;border-radius:16px;margin-bottom:1.25rem;color:#264b32;line-height:1.6}
+.nk-account-feedback:not(:empty){color:#286440;margin-bottom:1.2rem}
+.nk-account-error:not([hidden]){background:#fff0ee;color:#912c29;padding:1rem;border-radius:14px;border:1px solid #ffddd7;margin-bottom:1.2rem}
+.nk-account-list{list-style:none;margin:0;padding:0}
+.nk-account-list li{padding:.85rem 0;border-bottom:1px solid #e9eeea;color:#3e4a43}
+.nk-account-reset{margin-top:2rem}
+@media(max-width:720px){.nk-account-grid{grid-template-columns:1fr;gap:0}.nk-account-head-row{flex-direction:column}.nk-account-inline{flex-direction:column;align-items:stretch}.nk-account-inline button{width:100%}}
+@media(prefers-reduced-motion:reduce){.nk-account-panel button{transition:none}}
+
+/* Authenticated device-revocation list. No raw device secret is rendered. */
+.nk-own-device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(63, 96, 73, .17);
+  padding: .85rem 0;
+}
+.nk-own-device-row p {
+  margin: 0;
+  min-width: 12rem;
+  flex: 1 1 16rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.nk-own-device-row button {
+  min-height: 44px;
+}
+@media (max-width: 650px) {
+  .nk-own-device-row { align-items: stretch; flex-direction: column; }
+  .nk-own-device-row button { width: 100%; }
+}
+
+/* 8.4: structured account, interactive cart and accessible navigation. */
+.nk-account-shortcuts{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1.1rem}
+.nk-account-shortcuts a,.nk-account-link{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d2e1d6;border-radius:14px;min-height:45px;padding:.6rem 1rem;background:#edf5ef;color:#245f39;text-decoration:none;font-weight:650;line-height:1.35}
+.nk-account-shortcuts a:hover,.nk-account-link:hover{background:#dfeee2}
+.nk-account-shortcuts a:focus-visible,.nk-account-link:focus-visible{outline:3px solid #8ab99b;outline-offset:3px}
+.nk-account-link-secondary{background:#fff;color:#34433b}
+.nk-account-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin:.5rem 0 1.1rem}
+.nk-account-contract,.nk-account-order{padding:1rem;border:1px solid #e0eae2;border-radius:17px;background:#fcfdfc;margin:0 0 .85rem}
+.nk-account-contract h3{font-size:1.08rem;font-weight:720;letter-spacing:-.025em;margin:.4rem 0 .8rem;color:#1c3225}
+.nk-account-contract p,.nk-account-order p{margin:0 0 .55rem;color:#46594e;overflow-wrap:anywhere}
+.nk-account-contract p:last-child,.nk-account-order p:last-child{margin-bottom:0}
+.nk-account-status{display:inline-block;padding:.22rem .65rem;border-radius:999px;font-size:.8rem;font-weight:730;background:#f1f3f0;color:#485a4b}
+.nk-account-status[data-active="true"]{background:#e4f3e6;color:#205b38}
+.nk-account-cart-line{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;padding:.75rem 0;border-bottom:1px solid #e1e8e2}
+.nk-account-cart-line p{margin:0;flex:1 1 10rem;overflow-wrap:anywhere}
+.nk-account-cart-actions{display:flex;align-items:center;gap:.55rem}
+.nk-account-panel .nk-account-cart-actions button{margin:0;padding:.3rem .8rem;min-width:42px;min-height:42px}
+.nk-account-cart-actions span{font-variant-numeric:tabular-nums;min-width:1.4rem;text-align:center}
+.nk-account-order strong{display:block;margin-bottom:.45rem;color:#223b2b}
+#vertraege,#shop,#bestellungen,#geraete,#konto-sicherheit{scroll-margin-top:6.8rem}
+@media(max-width:720px){.nk-account-shortcuts a,.nk-account-actions a{flex:1 1 100%}.nk-account-cart-line{align-items:flex-start}.nk-account{padding-inline:.85rem}}
+
+/* 8.5: accessible signup consent in the existing FDS account design. */
+.nk-account-signup[hidden],.nk-account-reset[hidden],#nk-login-form[hidden],
+#nk-show-signup[hidden]{display:none!important}
+.nk-account-signup{border-top:1px solid #dfe9e1;padding-top:1.1rem;margin-top:1rem}
+.nk-account-signup h3{font-size:1.25rem;font-weight:750;letter-spacing:-.035em;margin:0 0 .7rem}
+.nk-account-consent{margin:1.3rem 0;display:grid;gap:.85rem}
+.nk-account-panel .nk-account-consent label{display:flex;gap:.75rem;align-items:flex-start;margin:0;font-size:.95rem;line-height:1.55;font-weight:500;cursor:pointer}
+.nk-account-panel .nk-account-consent input[type="checkbox"]{width:1.2rem;height:1.2rem;min-width:1.2rem;min-height:1.2rem;flex:0 0 1.2rem;display:inline-block;margin:.15rem 0 0;padding:0;border-radius:5px;accent-color:#287043}
+.nk-account-consent a{font-weight:680;color:#215d38;text-decoration:underline;text-underline-offset:3px}
+.nk-account-consent a:focus-visible{outline:3px solid #8ab99b;outline-offset:3px}
+.nk-account-panel select:disabled{color:#667169;background:#f1f4f1}

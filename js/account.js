@@ -18,6 +18,7 @@
   let shopCheckoutReady = false;
   let shopCart = [];
   let orderSnapshot = null;
+  let signupStudios = [];
 
   function validSession(value) {
     return !!value && typeof value === 'object' &&
@@ -608,11 +609,117 @@
       feedback(error instanceof Error ? error.message : 'Vorgang konnte nicht bestätigt werden.',true);
     }
     finally { busy = false; buttons.forEach(button => {
-      if (button.id === 'nk-studio-save' || button.id === 'nk-checkout-button' ||
+      if (button.id === 'nk-signup-submit' ||
+          button.id === 'nk-studio-save' || button.id === 'nk-checkout-button' ||
           button.id === 'nk-web-shop-checkout' || button.id === 'nk-billing-portal') return;
       button.disabled = false;
     }); }
   }
+  const SIGNUP_STUDIO_SLUG = /^[a-z0-9][a-z0-9-]{0,59}$/;
+  function validateSignupInput(value) {
+    const email = String(value?.email ?? '').trim();
+    const firstName = String(value?.firstName ?? '').trim();
+    const lastName = String(value?.lastName ?? '').trim();
+    const homeStudioSlug = String(value?.homeStudioSlug ?? '').trim();
+    const password = String(value?.password ?? '');
+    if (email.length>254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))
+      throw new Error('Bitte eine gültige E-Mail-Adresse eingeben.');
+    if (password.length<12 || password.length>256)
+      throw new Error('Bitte ein Passwort mit 12 bis 256 Zeichen verwenden.');
+    if (!firstName || !lastName || firstName.length>100 || lastName.length>100)
+      throw new Error('Vor- und Nachname sind erforderlich (je höchstens 100 Zeichen).');
+    if (!SIGNUP_STUDIO_SLUG.test(homeStudioSlug) ||
+        !signupStudios.some(studio=>studio.slug===homeStudioSlug))
+      throw new Error('Bitte ein gültiges Startstudio auswählen.');
+    if (value.acceptedTerms!==true || value.acceptedPrivacy!==true)
+      throw new Error('Bitte AGB-Entwurf und Datenschutzinformationen bestätigen.');
+    return {email,password,firstName,lastName,homeStudioSlug};
+  }
+  function showSignupPanel(open) {
+    byId('nk-login-form').hidden=open;
+    byId('nk-reset-form').hidden=open;
+    byId('nk-confirmation-form').hidden=open;
+    byId('nk-signup-form').hidden=!open;
+    byId('nk-show-signup').hidden=open;
+    byId('nk-show-signup').setAttribute('aria-expanded',String(open));
+    feedback('');
+    if (open) byId('nk-signup-first').focus();
+    else byId('nk-login-email').focus();
+  }
+  async function loadSignupStudios() {
+    const select = byId('nk-signup-studio');
+    const status = byId('nk-signup-studio-status');
+    const submit = byId('nk-signup-submit');
+    submit.disabled=true;
+    select.disabled=true;
+    status.textContent='Verfügbare Startstudios werden geladen …';
+    try {
+      const data=await request(
+        '/rest/v1/studios?select=id,name,slug,active&active=eq.true&order=name.asc&limit=50');
+      if (!Array.isArray(data) || data.length>50 ||
+        data.some(row=>!UUID.test(row?.id) || typeof row.name!=='string' ||
+          row.name.length<1 || row.name.length>160 ||
+          !SIGNUP_STUDIO_SLUG.test(row.slug) || row.active!==true)) {
+        throw new Error('Studioauswahl ist unvollständig.');
+      }
+      signupStudios=data;
+      select.replaceChildren();
+      const placeholder=document.createElement('option');
+      placeholder.value='';placeholder.textContent='Bitte Startstudio auswählen';
+      select.appendChild(placeholder);
+      for(const row of signupStudios){
+        const option=document.createElement('option');
+        option.value=row.slug;option.textContent=row.name;select.appendChild(option);
+      }
+      select.disabled=signupStudios.length===0;
+      submit.disabled=signupStudios.length===0;
+      status.textContent=signupStudios.length
+        ? 'Die Studioauswahl stammt aus dem freigegebenen Standortkatalog.'
+        : 'Derzeit ist kein registrierbares Startstudio verfügbar.';
+    } catch {
+      signupStudios=[];
+      select.replaceChildren();
+      status.textContent='Studioauswahl derzeit nicht erreichbar. Bitte erneut versuchen.';
+    }
+  }
+  async function signup(event) {
+    event.preventDefault();
+    await run(async()=>{
+      const form=event.currentTarget;
+      const fields=form.elements;
+      const confirmed=validateSignupInput({
+        email:fields.email.value,password:fields.password.value,
+        firstName:fields.firstName.value,lastName:fields.lastName.value,
+        homeStudioSlug:fields.homeStudioSlug.value,
+        acceptedTerms:fields.acceptedTerms.checked,
+        acceptedPrivacy:fields.acceptedPrivacy.checked,
+      });
+      const result=await request('/auth/v1/signup',{
+        method:'POST',body:{
+          email:confirmed.email,password:confirmed.password,
+          data:{
+            first_name:confirmed.firstName,last_name:confirmed.lastName,
+            home_studio_slug:confirmed.homeStudioSlug,
+            terms_accepted:true,privacy_accepted:true,marketing_accepted:false,
+          },
+        },
+      });
+      // Email confirmation may be required: no access token means no login.
+      form.elements.password.value='';
+      if (result?.access_token && result?.refresh_token && result?.user) {
+        acceptAuthResponse(result);
+        await loadAccount();
+        feedback('Konto registriert und serverseitig angemeldet. Mitgliedschaften sind weiterhin unbezahlt.');
+      } else if (result?.user && UUID.test(result.user.id)) {
+        showSignupPanel(false);
+        byId('nk-login-email').value=confirmed.email;
+        feedback('Registrierungsanfrage angenommen. Bitte bestätige deine E-Mail, falls eine Nachricht eintrifft. Es besteht noch keine aktive Anmeldung.');
+      } else {
+        throw new Error('Der Anmeldedienst hat die Registrierung nicht bestätigt.');
+      }
+    });
+  }
+
   async function login(event) {
     event.preventDefault();
     await run(async () => {
@@ -722,6 +829,13 @@
   async function mount() {
     if (!byId('nk-login-panel')) return;
     byId('nk-login-form').addEventListener('submit',event=>{void login(event);});
+    byId('nk-signup-form').addEventListener('submit',event=>{void signup(event);});
+    byId('nk-show-signup').addEventListener('click',()=>{
+      showSignupPanel(true);
+      void loadSignupStudios();
+    });
+    byId('nk-show-login').addEventListener('click',()=>showSignupPanel(false));
+    byId('nk-signup-studio-retry').addEventListener('click',()=>{void loadSignupStudios();});
     byId('nk-reset-form').addEventListener('submit',event=>{void reset(event);});
     byId('nk-confirmation-form').addEventListener('submit',event=>{void resendSignupConfirmation(event);});
     byId('nk-studio-save').addEventListener('click',()=>{void saveStudio();});
@@ -746,6 +860,7 @@
     byId('nk-checkout-button').disabled=true;
     byId('nk-billing-portal').disabled=true;
     byId('nk-web-shop-checkout').disabled=true;
+    byId('nk-signup-submit').disabled=true;
     try {
       const cached = JSON.parse(sessionStorage.getItem(KEY) ?? 'null');
       if (validSession(cached)) session = cached;
@@ -760,6 +875,7 @@
     } else showAccount(false);
   }
   window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,
-    paidMembership,contractStatusLabel,detailsForContract,orderStatusName,memberSectionFromHash,mount};
+    paidMembership,contractStatusLabel,detailsForContract,orderStatusName,
+    memberSectionFromHash,validateSignupInput,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

@@ -4,6 +4,7 @@
  * This is a browser/UX check, not a real backend acceptance test.
  */
 const SUPABASE_ORIGIN='https://mfaqlfsaatmhvcqlpzoz.supabase.co';
+const PAGE_STATES=new WeakMap();
 const USER='11111111-1111-4111-8111-111111111111';
 const STUDIO='22222222-2222-4222-8222-222222222222';
 const CATEGORY='33333333-3333-4333-8333-333333333333';
@@ -83,6 +84,7 @@ function seed(){
 }
 
 async function installFixtures(page, state=seed()){
+ PAGE_STATES.set(page,state);
  await page.route(SUPABASE_ORIGIN+'/**',async route=>{
   const request=route.request();
   const u=new URL(request.url());
@@ -185,4 +187,4 @@ async function installFixtures(page, state=seed()){
  });
  return state;
 }
-module.exports={seed,installFixtures,USER,STUDIO,CATEGORY,PRODUCT,DEVICE};
+module.exports={seed,installFixtures,fixtureState:page=>PAGE_STATES.get(page),USER,STUDIO,CATEGORY,PRODUCT,DEVICE};

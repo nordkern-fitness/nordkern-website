@@ -64,8 +64,8 @@ test('8.5 member portal exposes GoTrue signup, consent and verified member login
  assert.match(html,/id="nk-signup-studio"/);
  assert.match(html,/id="nk-signup-terms"/);
  assert.match(html,/id="nk-signup-privacy"/);
- assert.match(html,/href="impressum.html#tab-agb"/);
- assert.match(html,/href="impressum.html#tab-datenschutz"/);
+ assert.match(html,/href="impressum.html#agb"/);
+ assert.match(html,/href="impressum.html#datenschutz"/);
  assert.match(source,/\/auth\/v1\/signup/);
  assert.match(source,/home_studio_slug:confirmed.homeStudioSlug/);
  assert.match(source,/marketing_accepted:false/);

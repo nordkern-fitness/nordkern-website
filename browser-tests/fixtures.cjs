@@ -175,6 +175,10 @@ async function installFixtures(page, state=seed()){
      await route.fallback();
    }else if(url.origin==='http://127.0.0.1:8765'){
      await route.continue();
+   }else if(url.hostname==='fonts.googleapis.com'||url.hostname==='fonts.gstatic.com'){
+     // Existing website references optional Google Fonts. Do NOT contact
+     // Google in tests: use local system-font fallback instead.
+     await route.abort('blockedbyclient');
    }else {
      throw new Error('Unexpected external browser network request: '+url.origin);
    }

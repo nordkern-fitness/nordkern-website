@@ -622,7 +622,7 @@
     const lastName = String(value?.lastName ?? '').trim();
     const homeStudioSlug = String(value?.homeStudioSlug ?? '').trim();
     const password = String(value?.password ?? '');
-    if (email.length>254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))
+    if (email.length>254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       throw new Error('Bitte eine gültige E-Mail-Adresse eingeben.');
     if (password.length<12 || password.length>256)
       throw new Error('Bitte ein Passwort mit 12 bis 256 Zeichen verwenden.');

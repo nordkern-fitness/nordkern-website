@@ -17,6 +17,7 @@
   let webCheckoutEnabled = false;
   let shopCheckoutReady = false;
   let shopCart = [];
+  let orderSnapshot = null;
 
   function validSession(value) {
     return !!value && typeof value === 'object' &&
@@ -185,6 +186,195 @@
     byId('nk-member-panel').hidden = !visible;
     byId('nk-login-panel').hidden = visible;
   }
+  function detailsForContract(m, now) {
+    const snapshot = m?.pricing_snapshot;
+    const safeName = typeof snapshot?.plan_name === 'string' &&
+      snapshot.plan_name.trim().length > 0 && snapshot.plan_name.length <= 160
+      ? snapshot.plan_name.trim() : 'Mitgliedschaft';
+    const active = paidMembership(m, now);
+    const lines = [
+      'Status: ' + String(m?.status ?? 'unbekannt'),
+      'Bezahlter Zeitraum bis: ' + date(m?.current_period_end),
+    ];
+    if (Number.isSafeInteger(m?.contract_price_cents) &&
+        m.contract_price_cents >= 0 && m?.currency === 'eur') {
+      lines.push('Dein bestätigter Vertragspreis: ' +
+        euro(m.contract_price_cents) +
+        (snapshot?.billing_interval === 'month' ? ' monatlich' : ''));
+    }
+    if (m?.minimum_term_ends_at) {
+      lines.push('Mindestlaufzeit bis: ' + date(m.minimum_term_ends_at));
+    }
+    if (m?.cancellation_effective_at) {
+      lines.push('Kündigung vorgemerkt zum: ' + date(m.cancellation_effective_at));
+    }
+    return { name:safeName, active, lines };
+  }
+  function renderContractOverview(memberships, passes, wallet, now) {
+    const area = byId('nk-member-contracts');
+    area.replaceChildren();
+    if (!memberships.length && !passes.length) {
+      area.appendChild(element('p','Noch keine bestätigten Verträge oder Pässe vorhanden.'));
+    }
+    for (const membership of memberships) {
+      const info = detailsForContract(membership, now);
+      const card = element('section');
+      card.className = 'nk-account-contract';
+      card.appendChild(element('h3',info.name));
+      const badge = element('span',info.active ? 'Bezahlter Zutrittszeitraum' : 'Kein bestätigter aktiver Zutrittszeitraum');
+      badge.className = 'nk-account-status';
+      badge.dataset.active = String(info.active);
+      card.appendChild(badge);
+      for (const line of info.lines) card.appendChild(element('p',line));
+      area.appendChild(card);
+    }
+    for (const pass of passes) {
+      const card = element('section');
+      card.className = 'nk-account-contract';
+      const title = typeof pass?.title === 'string' && pass.title.length <= 180
+        ? pass.title : 'Pass';
+      card.appendChild(element('h3',title));
+      card.appendChild(element('p','Status: '+String(pass?.status ?? 'unbekannt')));
+      card.appendChild(element('p','Gültig ab: '+date(pass?.starts_at)));
+      card.appendChild(element('p','Gültig bis: '+date(pass?.expires_at)));
+      area.appendChild(card);
+    }
+    const walletCard = element('section');
+    walletCard.className = 'nk-account-contract';
+    walletCard.appendChild(element('h3','Dein Guthaben'));
+    const entries = [['drinks','Freigetränke'],['additional_drinks','Zusätzliche Getränke'],
+      ['creatine','Kreatin'],['protein','Protein']];
+    if (!wallet) {
+      walletCard.appendChild(element('p','Für dieses Konto ist kein Guthabenstand bestätigt.'));
+    } else {
+      for (const [key,name] of entries) {
+        const value = wallet[key];
+        walletCard.appendChild(element('p',name+': '+
+          (Number.isSafeInteger(value)&&value>=0 ? String(value) : 'nicht bestätigt')));
+      }
+    }
+    area.appendChild(walletCard);
+  }
+  function orderStatusName(status) {
+    return {
+      pending_payment:'Zahlung ausstehend',paid:'Bezahlt',
+      partially_refunded:'Teilweise erstattet · Prüfung offen',
+      refunded:'Erstattet',failed:'Zahlung fehlgeschlagen',cancelled:'Abgebrochen'
+    }[status] || 'Nicht bestätigt';
+  }
+  function renderOrders() {
+    const node = byId('nk-web-order-history');
+    const filter = byId('nk-order-filter').value;
+    const summary = byId('nk-order-count');
+    node.replaceChildren();
+    if (!orderSnapshot) {
+      summary.textContent = 'Bestellungen konnten nicht sicher geladen werden.';
+      node.appendChild(element('p','Keine verifizierte Bestellhistorie verfügbar.'));
+      return;
+    }
+    const {orders,items} = orderSnapshot;
+    const shown = filter === 'all' ? orders : orders.filter(order=>order.status===filter);
+    summary.textContent = shown.length+' von '+orders.length+
+      ' zuletzt geladenen Bestellungen angezeigt (max. 30).';
+    if (!shown.length) {
+      node.appendChild(element('p',orders.length
+        ? 'Für diesen Status wurden keine Bestellungen gefunden.' :
+          'Du hast noch keine Bestellungen.'));
+      return;
+    }
+    for (const order of shown) {
+      const card = element('section');
+      card.className = 'nk-account-order';
+      const label = typeof order.public_number === 'string' &&
+        order.public_number.length <= 100 ? order.public_number : 'Bestellung';
+      card.appendChild(element('strong',label+' · '+orderStatusName(order.status)+
+        ' · '+euro(order.total_cents)));
+      card.appendChild(element('p','Bestellt am '+date(order.created_at)));
+      if (order.paid_at) card.appendChild(element('p','Zahlung bestätigt am '+date(order.paid_at)));
+      if (Number.isSafeInteger(order.refunded_cents)&&order.refunded_cents>0) {
+        card.appendChild(element('p','Als erstattet erfasst: '+euro(order.refunded_cents)));
+      }
+      for (const item of items.filter(entry=>entry.order_id===order.id)) {
+        card.appendChild(element('p',item.quantity+' × '+item.title+
+          ' · '+euro(item.quantity*item.unit_price_cents)));
+      }
+      node.appendChild(card);
+    }
+  }
+  function renderPortalCart(products, canCheckout) {
+    const cartApi = window.NordkernShopCart;
+    const display = byId('nk-web-shop-cart');
+    const status = byId('nk-web-shop-checkout-status');
+    const original = cartApi.readCart();
+    const eligible = cartApi.publishedCart(original,products);
+    if (eligible.length !== original.length) {
+      // The server catalogue changed; stale selections must not reach checkout.
+      cartApi.writeCart(eligible);
+    }
+    shopCart = eligible;
+    display.replaceChildren();
+    let total=0;
+    for (const line of eligible) {
+      const product = products.find(item=>item.id===line.product_id);
+      if (!product) continue;
+      const row = element('div');
+      row.className = 'nk-account-cart-line';
+      const description = element('p',product.title+' · '+euro(product.price_cents*line.quantity));
+      const controls = element('div');
+      controls.className = 'nk-account-cart-actions';
+      const quantity = element('span',line.quantity);
+      const change = (delta) => {
+        try {
+          cartApi.writeCart(cartApi.updateCart(cartApi.readCart(),product.id,delta));
+          pendingShopCheckout=null;
+          renderPortalCart(products,canCheckout);
+        } catch {
+          status.textContent = 'Warenkorb konnte nicht gespeichert werden. Bitte prüfe die Browserfreigaben.';
+        }
+      };
+      const minus = element('button','−');
+      minus.type = 'button'; minus.disabled = false;
+      minus.className = 'nk-account-subtle';
+      minus.setAttribute('aria-label',product.title+' entfernen');
+      minus.addEventListener('click',()=>change(-1));
+      const plus = element('button','+');
+      plus.type = 'button';
+      plus.disabled = line.quantity>=10 ||
+        eligible.reduce((sum,item)=>sum+item.quantity,0)>=20;
+      plus.className = 'nk-account-subtle';
+      plus.setAttribute('aria-label',product.title+' hinzufügen');
+      plus.addEventListener('click',()=>change(1));
+      controls.appendChild(minus);
+      controls.appendChild(quantity);
+      controls.appendChild(plus);
+      row.appendChild(description);
+      row.appendChild(controls);
+      display.appendChild(row);
+      total+=product.price_cents*line.quantity;
+    }
+    if (!eligible.length) display.appendChild(element('p','Dein digitaler Testwarenkorb ist leer.'));
+    else display.appendChild(element('strong','Warenkorbvorschau: '+euro(total)+
+      '. Der verbindliche Preis wird beim serverseitigen Checkout überprüft.'));
+    shopCheckoutReady = canCheckout && eligible.length>0 && cartApi.validCart(eligible);
+    byId('nk-web-shop-checkout').disabled = !shopCheckoutReady;
+    status.textContent = eligible.length!==original.length
+      ? 'Nicht mehr veröffentlichte Artikel wurden aus dem Warenkorb entfernt. Bitte prüfe die Auswahl.'
+      : shopCheckoutReady
+        ? 'Testcheckout kann angefragt werden. Der Server prüft jede Position und Berechtigung erneut.'
+        : 'Checkout noch nicht freigeschaltet oder Warenkorb leer. Es wird keine Zahlung ausgelöst.';
+  }
+  function memberSectionFromHash(value) {
+    return ['#vertraege','#shop','#bestellungen','#geraete','#konto-sicherheit']
+      .includes(value) ? value.slice(1) : null;
+  }
+  function focusRequestedMemberSection() {
+    const target = memberSectionFromHash(window.location?.hash);
+    if (target) {
+      const section = byId(target);
+      if (section?.scrollIntoView) section.scrollIntoView({behavior:'auto',block:'start'});
+    }
+  }
+
   async function loadAccount() {
     const identity = await authorized('/auth/v1/user');
     if (!UUID.test(identity?.id) || identity.id !== session.userId) {
@@ -227,15 +417,7 @@
     byId('nk-studio-save').disabled = !!locked || studios.length === 0;
     if (locked) byId('nk-studio-status').textContent +=
       ' · Nächster Wechsel frühestens ' + date(studioChoice.change_allowed_at);
-    const messages = [];
-    for (const m of memberships) messages.push(contractStatusLabel(m,Date.now()));
-    for (const p of passes) messages.push(String(p.title) + ' · ' + String(p.status) +
-      ' · Endet: ' + date(p.expires_at));
-    const wallet = wallets[0];
-    if (wallet) messages.push('Guthaben: ' + Number(wallet.drinks ?? 0) + ' Freigetränke · ' +
-      Number(wallet.additional_drinks ?? 0) + ' zusätzliche Getränke · ' +
-      Number(wallet.creatine ?? 0) + ' Kreatin · ' + Number(wallet.protein ?? 0) + ' Protein');
-    list(byId('nk-member-contracts'), messages);
+    renderContractOverview(memberships,passes,wallets[0]??null,Date.now());
     renderOptions(byId('nk-offer-select'), catalogue.map((row, index) => ({
       id:String(index),name:String(row.item.name ?? row.item.title) + ' · ' +
         new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(
@@ -259,9 +441,13 @@
       }
     });
     await loadShopAccount(checkoutAvailable,user);
-    if (new URLSearchParams(window.location.search).get('status') === 'success') {
-      feedback('Zurück vom Stripe-Testcheckout. Eine Weiterleitung ist kein Zahlungsnachweis. Der Kontostatus wird ausschließlich serverseitig geführt.');
+    const returnStatus = new URLSearchParams(window.location.search).get('status');
+    if (returnStatus === 'success') {
+      feedback('Zurück vom Stripe-Testcheckout. Eine Weiterleitung ist kein Zahlungsnachweis. Nutze „Daten aktualisieren“, bis die Zahlung serverseitig bestätigt ist.');
+    } else if (returnStatus === 'cancelled') {
+      feedback('Stripe-Testcheckout verlassen. Bitte prüfe den serverseitigen Bestell- und Vertragsstatus.');
     }
+    focusRequestedMemberSection();
   }
 
   const euro = value => new Intl.NumberFormat('de-DE',{
@@ -329,6 +515,7 @@
     const status=byId('nk-web-shop-checkout-status');
     const history=byId('nk-web-order-history');
     shopCheckoutReady=false;
+    orderSnapshot=null;
     byId('nk-web-shop-checkout').disabled=true;
     display.replaceChildren();
     history.textContent='Bestellhistorie wird aktualisiert.';
@@ -358,47 +545,13 @@
           item.unit_price_cents<0))
         throw new Error('Bestellpositionen konnten nicht sicher überprüft werden.');
 
-      shopCart=window.NordkernShopCart.publishedCart(
-        window.NordkernShopCart.readCart(),catalogue.products);
-      const selected=shopCart.map(line=>({
-        line,product:catalogue.products.find(p=>p.id===line.product_id)
-      })).filter(entry=>entry.product);
-      display.replaceChildren();
-      if(!selected.length)display.appendChild(element('p','Noch keine freigegebenen digitalen Guthabenartikel im Warenkorb.'));
-      let subtotal=0;
-      for(const {line,product} of selected) {
-        const wrapper=element('p');
-        wrapper.appendChild(element('strong',line.quantity+' × '+product.title));
-        wrapper.appendChild(document.createTextNode(' · '+euro(line.quantity*product.price_cents)));
-        display.appendChild(wrapper);
-        subtotal+=line.quantity*product.price_cents;
-      }
-      if(selected.length)display.appendChild(element('strong',
-        'Warenkorbvorschau: '+euro(subtotal)+' · endgültigen Betrag bestätigt Stripe nach Serverabgleich.'));
-      shopCheckoutReady=canCheckout&&selected.length>0;
-      byId('nk-web-shop-checkout').disabled=!shopCheckoutReady;
-      status.textContent=shopCheckoutReady
-        ? 'Stripe-Testcheckout serverseitig freigeschaltet. Keine Live-Zahlung.'
-        : 'Bestellung noch nicht freigeschaltet oder Warenkorb leer. Produktive Zahlungen bleiben deaktiviert.';
-
-      history.replaceChildren();
-      if(!orders.length)history.appendChild(element('p','Du hast noch keine Bestellungen.'));
-      const states={pending_payment:'Zahlung ausstehend',paid:'Bezahlt',
-        partially_refunded:'Teilweise erstattet · Prüfung offen',
-        refunded:'Erstattet',failed:'Zahlung fehlgeschlagen',cancelled:'Abgebrochen'};
-      for(const order of orders) {
-        const section=element('section');
-        section.appendChild(element('strong',
-          String(order.public_number)+' · '+states[order.status]+' · '+euro(order.total_cents)));
-        section.appendChild(element('p','Bestellt am '+date(order.created_at)));
-        for(const item of items.filter(item=>item.order_id===order.id)){
-          section.appendChild(element('p',item.quantity+' × '+item.title+' · '+
-            euro(item.quantity*item.unit_price_cents)));
-        }
-        history.appendChild(section);
-      }
+      orderSnapshot={orders,items};
+      renderOrders();
+      renderPortalCart(catalogue.products,canCheckout);
     } catch(error) {
       shopCheckoutReady=false;
+      orderSnapshot=null;
+      byId('nk-order-count').textContent='Bestellhistorie nicht verfügbar.';
       byId('nk-web-shop-checkout').disabled=true;
       status.textContent='Shop und Testkasse derzeit nicht verfügbar.';
       history.textContent=error instanceof Error?error.message:'Bestellungen konnten nicht geladen werden.';
@@ -553,7 +706,12 @@
   async function logout() {
     const old = session;
     session = null;activeUser = null;studioChoice = null;
-    webCheckoutEnabled = false;shopCheckoutReady = false;store();
+    webCheckoutEnabled = false;shopCheckoutReady = false;shopCart=[];orderSnapshot=null;store();
+    for (const id of ['nk-member-contracts','nk-web-order-history','nk-web-shop-cart',
+      'nk-order-count','nk-member-id','nk-member-name','nk-own-devices']) {
+      const node=byId(id);
+      if (node) node.replaceChildren();
+    }
     showAccount(false);
     feedback('Lokal abgemeldet.');
     if (old?.accessToken) {
@@ -570,7 +728,10 @@
     byId('nk-checkout-button').addEventListener('click',()=>{void startTestCheckout();});
     byId('nk-billing-portal').addEventListener('click',()=>{void openTestBillingPortal();});
     byId('nk-web-shop-checkout').addEventListener('click',()=>{void startShopTestCheckout();});
-    byId('nk-orders-reload').addEventListener('click',()=>{void run(loadAccount);});
+    byId('nk-orders-reload').addEventListener('click',()=>{
+      void run(async()=>{await loadAccount();feedback('Konto- und Vertragsdaten serverseitig aktualisiert.');});
+    });
+    byId('nk-order-filter').addEventListener('change',renderOrders);
     byId('nk-own-devices-reload').addEventListener('click',()=>{
       void run(async()=>{
         if(!session||!activeUser)throw new Error('Bitte anmelden.');
@@ -579,7 +740,9 @@
     });
     byId('nk-password-change-form').addEventListener('submit',event=>{void changeOwnPassword(event);});
     byId('nk-logout').addEventListener('click',()=>{void logout();});
-    byId('nk-reload').addEventListener('click',()=>{void run(loadAccount);});
+    byId('nk-reload').addEventListener('click',()=>{
+      void run(async()=>{await loadAccount();feedback('Konto- und Vertragsdaten serverseitig aktualisiert.');});
+    });
     byId('nk-checkout-button').disabled=true;
     byId('nk-billing-portal').disabled=true;
     byId('nk-web-shop-checkout').disabled=true;
@@ -596,6 +759,7 @@
       await run(loadAccount);
     } else showAccount(false);
   }
-  window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,paidMembership,contractStatusLabel,mount};
+  window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,
+    paidMembership,contractStatusLabel,detailsForContract,orderStatusName,memberSectionFromHash,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

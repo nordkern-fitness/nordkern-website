@@ -64,6 +64,13 @@
           </div>
           <p id="nk-member-id"></p>
           <button type="button" class="nk-account-subtle" id="nk-reload">Daten aktualisieren</button>
+          <nav class="nk-account-shortcuts" aria-label="Bereiche deines Kontos">
+            <a href="#vertraege">Verträge & Guthaben</a>
+            <a href="#shop">Warenkorb</a>
+            <a href="#bestellungen">Bestellungen</a>
+            <a href="#geraete">Geräte</a>
+            <a href="#konto-sicherheit">Kontosicherheit</a>
+          </nav>
         </div>
         <div class="nk-account-grid">
           <section class="nk-account-panel" aria-labelledby="nk-studio-title">
@@ -75,10 +82,11 @@
             <button type="button" id="nk-studio-save">Studioauswahl speichern</button>
             <p class="nk-account-hint">Ein Studiowechsel wird nur bei serverseitiger Freigabe durchgeführt.</p>
           </section>
-          <section class="nk-account-panel" aria-labelledby="nk-contract-title">
+          <section class="nk-account-panel" id="vertraege" aria-labelledby="nk-contract-title">
             <p class="eyebrow">Vertrag und Guthaben</p>
             <h2 id="nk-contract-title">Deine Leistungen.</h2>
-            <div id="nk-member-contracts"></div>
+            <div id="nk-member-contracts" role="status" aria-live="polite">Vertragsdaten werden geladen.</div>
+            <p class="nk-account-hint">Verbindlich sind die im Vertrag bestätigten Konditionen. Eine Rückleitung von Stripe ist kein Zahlungsnachweis.</p>
             <button type="button" class="nk-account-subtle" id="nk-billing-portal" disabled>
               Stripe-Testabrechnung öffnen
             </button>
@@ -101,18 +109,30 @@
           <h2 id="nk-shop-member-title">Deine Testbestellung.</h2>
           <p>Der Warenkorb enthält ausschließlich die Produkt-IDs aus dem öffentlichen Shop. Preise und Berechtigungen bestätigt immer der Server.</p>
           <div id="nk-web-shop-cart" role="status" aria-live="polite"></div>
+          <p class="nk-account-hint">Du kannst die Menge hier ändern oder im Shop weitere Produkte auswählen. Änderungen werden für dieses Browserfenster gespeichert.</p>
           <p id="nk-web-shop-checkout-status" class="nk-account-hint" role="status" aria-live="polite"></p>
           <button type="button" id="nk-web-shop-checkout" disabled>Stripe-Testbestellung öffnen</button>
           <p><a href="shop.html">Zum Shop und Warenkorb zurück</a></p>
         </section>
-        <section class="nk-account-panel" aria-labelledby="nk-orders-title">
+        <section class="nk-account-panel" id="bestellungen" aria-labelledby="nk-orders-title">
           <p class="eyebrow">Persönlicher Verlauf</p>
           <h2 id="nk-orders-title">Deine Bestellungen.</h2>
           <p>Nur Bestellungen deines angemeldeten Kontos. Eine Stripe-Rückleitung ist kein Zahlungsnachweis.</p>
+          <label for="nk-order-filter">Bestellstatus</label>
+          <select id="nk-order-filter">
+            <option value="all">Alle Bestellungen</option>
+            <option value="pending_payment">Zahlung ausstehend</option>
+            <option value="paid">Bezahlt</option>
+            <option value="partially_refunded">Teilweise erstattet</option>
+            <option value="refunded">Erstattet</option>
+            <option value="cancelled">Abgebrochen</option>
+            <option value="failed">Fehlgeschlagen</option>
+          </select>
+          <p id="nk-order-count" class="nk-account-hint" role="status" aria-live="polite"></p>
           <div id="nk-web-order-history" role="status" aria-live="polite">Bestellhistorie wird geladen.</div>
           <button type="button" id="nk-orders-reload" class="nk-account-subtle">Bestellungen aktualisieren</button>
         </section>
-        <section class="nk-account-panel" aria-labelledby="nk-own-devices-title">
+        <section class="nk-account-panel" id="geraete" aria-labelledby="nk-own-devices-title">
           <p class="eyebrow">Zutrittssicherheit</p>
           <h2 id="nk-own-devices-title">Deine Geräte.</h2>
           <p>Hier kannst du ein verlorenes oder nicht mehr verwendetes Smartphone sofort für den QR-Zutritt sperren.
@@ -124,7 +144,17 @@
             Geräteliste aktualisieren
           </button>
         </section>
-        <section class="nk-account-panel" aria-labelledby="nk-account-password-title">
+        <section class="nk-account-panel nk-account-app-bridge" aria-labelledby="nk-app-bridge-title">
+          <p class="eyebrow">Web & App</p>
+          <h2 id="nk-app-bridge-title">Dein Zugang, zwei Oberflächen.</h2>
+          <p>Im Web verwaltest du Verträge, Bestellungen und Geräte. Dynamische QR-Codes sind ausschließlich in einer freigegebenen App-Installation verfügbar.</p>
+          <div class="nk-account-actions">
+            <a href="nordkernapp:///profile" class="nk-account-link" id="nk-open-test-app">Installierte Nordkern-Test-App öffnen</a>
+            <a href="app.html" class="nk-account-link nk-account-link-secondary">Mehr zur Nordkern-App</a>
+          </div>
+          <p class="nk-account-hint">Die App ist noch nicht öffentlich veröffentlicht. Der erste Link funktioniert nur mit einer bereits installierten Testversion. Er enthält keine Zugangsdaten.</p>
+        </section>
+        <section class="nk-account-panel" id="konto-sicherheit" aria-labelledby="nk-account-password-title">
           <p class="eyebrow">Kontosicherheit</p>
           <h2 id="nk-account-password-title">Passwort ändern.</h2>
           <p>Die Änderung wird vom Nordkern-Anmeldedienst geprüft. Mindestens 12 Zeichen und Bestätigung des bisherigen Passworts.</p>

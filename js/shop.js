@@ -71,6 +71,15 @@
     if(!grid||!status||!filters)return;
     const cartArea=document.getElementById("nkshop-cart");
     const cartLink=document.getElementById("nkshop-account-link");
+    const cartHint=document.getElementById("nkshop-cart-transition-hint");
+    // aria-disabled does not block a normal anchor activation on its own.
+    // A zero-quantity cart must not appear to open a usable checkout.
+    if(cartLink)cartLink.addEventListener("click",event=>{
+      if(cartLink.getAttribute("aria-disabled")==="true"){
+        event.preventDefault();
+        if(cartHint)cartHint.textContent="Wähle zuerst ein verfügbares digitales Guthabenprodukt.";
+      }
+    });
     const cartApi=window.NordkernShopCart;
     let selected="all",catalogue=null;
     const renderCart=()=>{
@@ -101,6 +110,11 @@
       if(cartLink){
         cartLink.setAttribute("aria-disabled",String(!count));
         cartLink.tabIndex=count?0:-1;
+      }
+      if(cartHint){
+        cartHint.textContent=count
+          ?count+" digitale Einheit(en) bereit. Im Mitgliederkonto wird die Berechtigung vor dem Testcheckout erneut geprüft."
+          :"Wähle zuerst digitale Guthabenartikel. Versandprodukte sind derzeit nicht bestellbar.";
       }
     };
     const draw=()=>{

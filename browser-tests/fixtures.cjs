@@ -76,6 +76,7 @@ function seed(){
   emptyCatalogue:false,
   shopFailure:false,
   rejectLogin:false,
+  rejectUnconfirmedLogin:false,
   rejectRefresh:false,
   rejectOwnProfile:false,
   profileEnabled:true,
@@ -111,6 +112,9 @@ async function installFixtures(page, state=seed()){
    const refresh=u.searchParams.get('grant_type')==='refresh_token';
    if(refresh && state.rejectRefresh){
      await respond({error_code:'refresh_token_not_found',message:'Invalid Refresh Token'},401);return;
+   }
+   if(!refresh && state.rejectUnconfirmedLogin){
+     await respond({error_code:'email_not_confirmed',message:'Email not confirmed'},400);return;
    }
    if(!refresh && state.rejectLogin){
      await respond({error_code:'invalid_credentials',message:'Invalid login credentials'},400);return;

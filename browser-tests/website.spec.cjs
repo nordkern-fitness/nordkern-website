@@ -62,7 +62,7 @@ test('invalid login shows understandable error and does not show account data',a
  await page.goto('/konto.html');
  await page.locator('#nk-login-email').fill('member@nordkern.test');
  await page.locator('#nk-login-password').fill('x');
- await expect(page.locator('#nk-login-form')).not.toBeValid();
+ expect(await page.locator('#nk-login-form').evaluate(form=>form.checkValidity())).toBe(false);
  await expect(page.locator('#nk-member-panel')).toBeHidden();
 });
 
@@ -161,4 +161,13 @@ test('fixed website ↔ test-app handoffs never include credentials',async({page
  for(const link of links){
    expect(link).not.toMatch(/token|password|session|email/i);
  }
+});
+
+test('legal navigation opens the intended AGB and privacy tab for registration',async({page})=>{
+ await page.goto('/impressum.html#agb');
+ await expect(page.locator('#panel-agb')).toBeVisible();
+ await expect(page.locator('#panel-datenschutz')).toBeHidden();
+ await page.goto('/impressum.html#datenschutz');
+ await expect(page.locator('#panel-datenschutz')).toBeVisible();
+ await expect(page.locator('#panel-agb')).toBeHidden();
 });

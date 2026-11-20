@@ -215,3 +215,13 @@ test('8.4 order state labels are explicit and do not imply payments from browser
   assert.match(source,/Die Weiterleitung ist kein Zahlungsnachweis|Eine Weiterleitung ist kein Zahlungsnachweis/);
   assert.doesNotMatch(source,/localStorage\.setItem\([^\n]*accessToken/);
 });
+
+test('8.5 regression: signup accepts realistic emails before checking studio availability',()=>{
+  const api=loadAccount();
+  const base={password:'safe-test-password-123',firstName:'Test',lastName:'Person',
+    homeStudioSlug:'grevesmuehlen',acceptedTerms:true,acceptedPrivacy:true};
+  assert.throws(()=>api.validateSignupInput({...base,email:'verify@nordkern.test'}),/Startstudio/);
+  assert.throws(()=>api.validateSignupInput({...base,email:'person.smith+new@example.org'}),/Startstudio/);
+  assert.throws(()=>api.validateSignupInput({...base,email:'broken-address'}),/gültige E-Mail/);
+  assert.throws(()=>api.validateSignupInput({...base,email:'foo@invalid'}),/gültige E-Mail/);
+});

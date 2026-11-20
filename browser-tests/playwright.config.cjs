@@ -27,6 +27,8 @@ module.exports = defineConfig({
     { name:'desktop-chromium', use:{browserName:'chromium',viewport:{width:1440,height:900}} },
   ],
   webServer: {
+    // The config lives in browser-tests/, but the pages are at repo root.
+    cwd: require('node:path').resolve(__dirname,'..'),
     command: 'python3 -m http.server 8765 --bind 127.0.0.1',
     url: 'http://127.0.0.1:8765/',
     reuseExistingServer: !process.env.CI,

@@ -43,10 +43,10 @@ test('signup validates fields and consent, uses real GoTrue HTTP contract, never
  await page.locator('#nk-signup-email').fill('verify@nordkern.test');
  await page.locator('#nk-signup-password').fill('safe-test-password-123');
  await page.locator('#nk-signup-studio').selectOption('grevesmuehlen');
- await expect(page.locator('#nk-signup-form')).not.toBeValid();
+ expect(await page.locator('#nk-signup-form').evaluate(form=>form.checkValidity())).toBe(false);
  await page.locator('#nk-signup-terms').check();
  await page.locator('#nk-signup-privacy').check();
- await expect(page.locator('#nk-signup-form')).toBeValid();
+ expect(await page.locator('#nk-signup-form').evaluate(form=>form.checkValidity())).toBe(true);
  await page.locator('#nk-signup-submit').click();
  await expect(page.locator('#nk-login-form')).toBeVisible();
  await expect(page.locator('#nk-member-panel')).toBeHidden();

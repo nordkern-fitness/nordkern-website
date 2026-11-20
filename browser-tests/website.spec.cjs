@@ -179,3 +179,69 @@ test('legal navigation opens the intended AGB and privacy tab for registration',
  await expect(page.locator('#panel-datenschutz')).toBeVisible();
  await expect(page.locator('#panel-agb')).toBeHidden();
 });
+
+test('8.6 rejected real-shaped refresh invalidates local session and clears protected UI',async({page})=>{
+ await login(page);
+ const state=fixtureState(page);
+ state.rejectRefresh=true;
+ await page.evaluate(()=>{
+   const key='nordkern-website-session-v1';
+   const stored=JSON.parse(sessionStorage.getItem(key));
+   stored.expiresAt=Date.now()-2000;
+   sessionStorage.setItem(key,JSON.stringify(stored));
+ });
+ await page.reload();
+ await expect(page.locator('#nk-member-panel')).toBeHidden();
+ await expect(page.locator('#nk-login-form')).toBeVisible();
+ await expect(page.locator('#nk-member-contracts')).toBeEmpty();
+ await expect(page.locator('#nk-account-error')).toContainText('Sitzung');
+ const cached=await page.evaluate(()=>sessionStorage.getItem('nordkern-website-session-v1'));
+ expect(cached).toBeNull();
+ const refreshCalls=state.logs.filter(entry=>
+   entry.path==='/auth/v1/token'&&entry.search.includes('grant_type=refresh_token'));
+ expect(refreshCalls.length).toBe(1);
+});
+
+test('8.6 disabled profile is not a member login even with valid GoTrue token',async({page})=>{
+ const state=fixtureState(page);
+ state.profileEnabled=false;
+ await page.goto('/konto.html');
+ await page.locator('#nk-login-email').fill('member@nordkern.test');
+ await page.locator('#nk-login-password').fill('safe-test-password-123');
+ await page.locator('#nk-login-submit').click();
+ await expect(page.locator('#nk-account-error')).toContainText('nicht freigeschaltet');
+ await expect(page.locator('#nk-member-panel')).toBeHidden();
+ const cached=await page.evaluate(()=>sessionStorage.getItem('nordkern-website-session-v1'));
+ expect(cached).toBeNull();
+});
+
+test('8.6 forbidden RLS own profile request fails closed and removes local credentials',async({page})=>{
+ const state=fixtureState(page);
+ state.rejectOwnProfile=true;
+ await page.goto('/konto.html');
+ await page.locator('#nk-login-email').fill('member@nordkern.test');
+ await page.locator('#nk-login-password').fill('safe-test-password-123');
+ await page.locator('#nk-login-submit').click();
+ await expect(page.locator('#nk-member-panel')).toBeHidden();
+ await expect(page.locator('#nk-account-error')).toContainText('Berechtigung');
+ expect(await page.evaluate(()=>sessionStorage.getItem('nordkern-website-session-v1'))).toBeNull();
+});
+
+test('8.6 private contracts stay usable when the public pricing catalogue times out',async({page})=>{
+ fixtureState(page).catalogueFailure=true;
+ await login(page);
+ await expect(page.locator('#nk-member-contracts')).toContainText('Basic Original');
+ await expect(page.locator('#nk-checkout-button')).toBeDisabled();
+ await expect(page.locator('#nk-billing-portal')).toBeDisabled();
+});
+
+test('8.6 unconfirmed GoTrue email displays confirmation guidance and no membership',async({page})=>{
+ fixtureState(page).rejectUnconfirmedLogin=true;
+ await page.goto('/konto.html');
+ await page.locator('#nk-login-email').fill('member@nordkern.test');
+ await page.locator('#nk-login-password').fill('safe-test-password-123');
+ await page.locator('#nk-login-submit').click();
+ await expect(page.locator('#nk-account-error')).toContainText('bestätige zuerst');
+ await expect(page.locator('#nk-member-panel')).toBeHidden();
+ expect(await page.evaluate(()=>sessionStorage.getItem('nordkern-website-session-v1'))).toBeNull();
+});

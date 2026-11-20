@@ -53,14 +53,22 @@ test('website and app agree on active paid membership window',()=>{
   assert.equal(paidMembership({...membership,cancellation_effective_at:new Date(now-100).toISOString()},now),false);
 });
 
-test('member portal only exposes existing-user login, not unapproved registration',()=>{
+test('8.5 member portal exposes GoTrue signup, consent and verified member login',()=>{
   assert.match(html,/id="nk-login-form"/);
   assert.match(html,/id="nk-member-panel"/);
   assert.match(html,/id="nk-studio-select"/);
   assert.match(html,/id="nk-offer-select"/);
   assert.match(html,/data-header/);
   assert.match(header,/href="konto.html"/);
-  assert.doesNotMatch(html, /<form[^>]+sign-?up/);
+  assert.match(html,/id="nk-signup-form"[^>]+hidden/);
+ assert.match(html,/id="nk-signup-studio"/);
+ assert.match(html,/id="nk-signup-terms"/);
+ assert.match(html,/id="nk-signup-privacy"/);
+ assert.match(html,/href="impressum.html#tab-agb"/);
+ assert.match(html,/href="impressum.html#tab-datenschutz"/);
+ assert.match(source,/\/auth\/v1\/signup/);
+ assert.match(source,/home_studio_slug:confirmed.homeStudioSlug/);
+ assert.match(source,/marketing_accepted:false/);
   assert.doesNotMatch(source,/SUPABASE_SERVICE_ROLE_KEY|STRIPE_SECRET_KEY|ACCESS_READER_SECRET/);
 });
 
@@ -86,7 +94,7 @@ test('email confirmation resend is a separate non-registration GoTrue operation'
   assert.match(source,/type:'signup',email/);
   assert.match(source,/nk-confirmation-form/);
   assert.match(source,/wenn eine Bestätigung aussteht/i);
-  assert.doesNotMatch(html,/<form[^>]*id="nk-signup-form"/);
+  assert.match(html,/<form[^>]*id="nk-signup-form"/);
 });
 
 test('test billing portal cannot redirect members to arbitrary destinations',()=>{

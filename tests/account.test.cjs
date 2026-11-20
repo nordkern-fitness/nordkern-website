@@ -153,3 +153,57 @@ test('member device management uses scoped RLS reads and authenticated revoke RP
  assert.doesNotMatch(source,/devices\?select=\*/);
  assert.doesNotMatch(source,/credential_hash|device_credential|service_role/);
 });
+
+test('8.4 account sections support contracts, orders and the installed test app without credentials in URLs',()=>{
+  for (const id of ['vertraege','bestellungen','shop','geraete','konto-sicherheit']) {
+    assert.match(html,new RegExp('id="'+id+'"'));
+  }
+  for (const id of ['nk-order-filter','nk-order-count','nk-web-shop-cart']) {
+    assert.match(html,new RegExp('id="'+id+'"'));
+  }
+  assert.match(html,/href="nordkernapp:\/\/\/profile"/);
+  assert.match(html,/href="app.html"/);
+  assert.doesNotMatch(html,/nordkernapp:[^"']*\?(?:[^"']*token|[^"']*email)/);
+  const api=loadAccount();
+  assert.equal(api.memberSectionFromHash('#vertraege'),'vertraege');
+  assert.equal(api.memberSectionFromHash('#bestellungen'),'bestellungen');
+  assert.equal(api.memberSectionFromHash('#shop'),'shop');
+  assert.equal(api.memberSectionFromHash('#../admin'),null);
+  assert.equal(api.memberSectionFromHash('#shop?access_token=secret'),null);
+});
+
+test('8.4 active membership uses original contract snapshot, cancellation and confirmed paid period',()=>{
+  const api=loadAccount();
+  const member={
+    status:'active',starts_at:'2026-11-01T00:00:00Z',
+    current_period_end:'2026-12-01T00:00:00Z',
+    contract_price_cents:2990,currency:'eur',
+    pricing_snapshot:{plan_name:'Basic Original',billing_interval:'month'},
+    minimum_term_ends_at:'2027-10-31T00:00:00Z',
+    cancellation_effective_at:null
+  };
+  const current=api.detailsForContract(member,now);
+  assert.equal(current.name,'Basic Original');
+  assert.equal(current.active,true);
+  assert.match(current.lines.join(' '),/29,90/);
+  assert.match(current.lines.join(' '),/Mindestlaufzeit/);
+  const cancelled=api.detailsForContract({...member,cancellation_effective_at:'2026-11-12T15:00:00Z'},now);
+  assert.equal(cancelled.active,false);
+  assert.match(cancelled.lines.join(' '),/Kündigung vorgemerkt/);
+  assert.equal(api.detailsForContract({...member,pricing_snapshot:{plan_name:'<script>\u003c/script>'}},now).name,
+    '<script></script>');
+  assert.equal(api.detailsForContract({...member,pricing_snapshot:{plan_name:'x'.repeat(161)}},now).name,
+    'Mitgliedschaft');
+});
+
+test('8.4 order state labels are explicit and do not imply payments from browser redirect',()=>{
+  const api=loadAccount();
+  assert.equal(api.orderStatusName('pending_payment'),'Zahlung ausstehend');
+  assert.match(api.orderStatusName('partially_refunded'),/Prüfung offen/);
+  assert.equal(api.orderStatusName('unknown'),'Nicht bestätigt');
+  assert.match(source,/orderSnapshot=\{orders,items\}/);
+  assert.match(source,/renderPortalCart\(catalogue.products,canCheckout\)/);
+  assert.match(source,/cartApi\.writeCart\(cartApi\.updateCart\(/);
+  assert.match(source,/Die Weiterleitung ist kein Zahlungsnachweis|Eine Weiterleitung ist kein Zahlungsnachweis/);
+  assert.doesNotMatch(source,/localStorage\.setItem\([^\n]*accessToken/);
+});

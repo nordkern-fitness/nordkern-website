@@ -1,0 +1,37 @@
+name: Nordkern 8.6 PRIVATE DEV member E2E (explicit opt-in)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  member-integration:
+    # Never use existing real users by default. The operator must provision
+    # dedicated DEV fixture accounts and explicitly opt into this gated stage.
+    if: ${{ vars.NORDKERN_E2E_ENABLED == 'I_CONFIRM_DEV_TEST_USERS' }}
+    name: Real isolated DEV member Auth and RLS, no writes or payments
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      NORDKERN_E2E_ENABLED: ${{ vars.NORDKERN_E2E_ENABLED }}
+      NORDKERN_E2E_EMAIL: ${{ secrets.NORDKERN_E2E_EMAIL }}
+      NORDKERN_E2E_PASSWORD: ${{ secrets.NORDKERN_E2E_PASSWORD }}
+      NORDKERN_E2E_ACCOUNT_ID: ${{ vars.NORDKERN_E2E_ACCOUNT_ID }}
+      NORDKERN_E2E_FOREIGN_ACCOUNT_ID: ${{ vars.NORDKERN_E2E_FOREIGN_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify explicitly configured isolated fixture gate
+        run: |
+          node -e "if(process.env.NORDKERN_E2E_ENABLED!=='I_CONFIRM_DEV_TEST_USERS'||!process.env.NORDKERN_E2E_EMAIL||!process.env.NORDKERN_E2E_PASSWORD||!/^[0-9a-f-]{36}$/i.test(process.env.NORDKERN_E2E_ACCOUNT_ID||'')){process.stderr.write('Isolated DEV test credentials and expected UUID must be configured. No real account was touched.\n');process.exit(1)}"
+      - name: Install isolated Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.56.1
+      - name: Install Chromium only
+        run: npx playwright install --with-deps chromium
+      - name: Run authentic DEV member browser flows (no screenshots)
+        run: npx playwright test --config browser-tests/live-member.config.cjs

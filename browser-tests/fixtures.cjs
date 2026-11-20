@@ -171,7 +171,9 @@ async function installFixtures(page, state=seed()){
  // origin are blocked (no Stripe, analytics, mail, or production endpoints).
  await page.route(/^https?:\/\//,async route=>{
    const url=new URL(route.request().url());
-   if(url.origin==='http://127.0.0.1:8765'){
+   if(url.origin===SUPABASE_ORIGIN){
+     await route.fallback();
+   }else if(url.origin==='http://127.0.0.1:8765'){
      await route.continue();
    }else {
      throw new Error('Unexpected external browser network request: '+url.origin);

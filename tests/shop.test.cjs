@@ -65,8 +65,19 @@ test('shop checkout is never public: authenticated portal and server gate requir
  assert.match(html,/Stripe-Testmodus/);
  assert.doesNotMatch(html,/<button[^>]*>.*?(kaufen|bestellen).*?<\/button>/i);
  assert.match(accountHtml,/id="nk-web-shop-checkout" disabled/);
- assert.match(accountScript,/shopCheckoutReady=canCheckout&&selected.length>0/);
+ assert.match(accountScript,/shopCheckoutReady = canCheckout && eligible\.length>0 && cartApi\.validCart\(eligible\)/);
+ assert.match(accountScript,/cartApi\.writeCart\(eligible\)/);
+ assert.match(accountScript,/cartApi\.writeCart\(cartApi\.updateCart\(/);
  assert.match(accountScript,/returnSurface:'web'/);
  assert.match(accountScript,/\/functions\/v1\/create-shop-checkout/);
  assert.doesNotMatch(accountScript,/STRIPE_SECRET_KEY|SUPABASE_SERVICE_ROLE_KEY/);
+});
+
+test('8.4 shop handoff has a real empty-cart click guard and a credential-free native test route',()=>{
+ assert.match(html,/id="nkshop-cart-transition-hint"/);
+ assert.match(html,/href="nordkernapp:\/\/\/shop"/);
+ assert.match(source,/cartLink\.addEventListener\("click",event=>/);
+ assert.match(source,/event\.preventDefault\(\)/);
+ assert.match(source,/aria-disabled/);
+ assert.doesNotMatch(html,/nordkernapp:[^"']*\?(?:[^"']*token|[^"']*email)/);
 });

@@ -1,4 +1,5 @@
 const { defineConfig, devices } = require('@playwright/test');
+const path = require('node:path');
 
 module.exports = defineConfig({
   testDir: __dirname,
@@ -10,9 +11,9 @@ module.exports = defineConfig({
   retries: 0,
   reporter: [
     ['list'],
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['html', { outputFolder: path.resolve(__dirname, '..', 'playwright-report'), open: 'never' }],
   ],
-  outputDir: 'playwright-results',
+  outputDir: path.resolve(__dirname, '..', 'playwright-results'),
   use: {
     baseURL: 'http://127.0.0.1:8765',
     screenshot: 'only-on-failure',

@@ -19,6 +19,7 @@
   let shopCart = [];
   let orderSnapshot = null;
   let signupStudios = [];
+  let pendingRefresh = null;
 
   function validSession(value) {
     return !!value && typeof value === 'object' &&
@@ -115,9 +116,22 @@
         ...(body === undefined ? {} : { body: JSON.stringify(body) })
       });
       if (!response.ok) {
-        if ([400,401,403].includes(response.status)) throw new Error('Anmeldung oder Berechtigung nicht bestätigt.');
+        if (response.status === 400 && path.startsWith('/auth/v1/token?grant_type=password')) {
+          const errorBody = await response.clone().json().catch(() => null);
+          if (errorBody?.error_code === 'email_not_confirmed' ||
+              errorBody?.code === 'email_not_confirmed') {
+            throw new Error('Bitte bestätige zuerst deine E-Mail-Adresse. Über „Erneut anfordern“ kannst du eine neue Nachricht anfordern.');
+          }
+          throw new Error('Anmeldung nicht bestätigt. Bitte E-Mail-Adresse und Passwort prüfen.');
+        }
+        if (response.status === 429) throw new Error('Zu viele Versuche. Bitte warte, bevor du es erneut probierst.');
+        if (response.status === 401 || response.status === 403) {
+          if (token && session?.accessToken === token) invalidateSession();
+          throw new Error('Deine Sitzung ist nicht mehr gültig oder der Zugriff wurde verweigert. Bitte erneut anmelden.');
+        }
+        if (response.status === 400) throw new Error('Der Anmeldedienst hat die Anfrage abgelehnt. Bitte die Angaben prüfen.');
         if (response.status === 409) throw new Error('Studio- oder Vertragsänderung ist momentan gesperrt.');
-        if (response.status === 503) throw new Error('Der Stripe-Testdienst ist noch nicht freigeschaltet.');
+        if (response.status === 503) throw new Error('Nordkern-Dienst derzeit nicht verfügbar. Vorgang nicht bestätigt.');
         throw new Error('Nordkern-Dienst momentan nicht erreichbar (' + response.status + ').');
       }
       return response.status === 204 ? null : await response.json();
@@ -140,18 +154,57 @@
     session = next;
     store();
   }
+  function invalidateSession() {
+    session = null;
+    activeUser = null;
+    studioChoice = null;
+    studios = [];
+    catalogue = [];
+    orderSnapshot = null;
+    shopCheckoutReady = false;
+    webCheckoutEnabled = false;
+    pendingCheckout = null;
+    pendingShopCheckout = null;
+    store();
+    for (const id of ['nk-member-contracts','nk-web-order-history','nk-web-shop-cart',
+      'nk-order-count','nk-member-id','nk-member-name','nk-own-devices']) {
+      const node = byId(id);
+      if (node) node.replaceChildren();
+    }
+    for (const id of ['nk-checkout-button','nk-billing-portal','nk-web-shop-checkout',
+      'nk-studio-save']) {
+      const button = byId(id);
+      if (button) button.disabled = true;
+    }
+    if (byId('nk-member-panel')) showAccount(false);
+  }
   async function refreshSession() {
     if (!validSession(session)) throw new Error('Bitte erneut anmelden.');
     if (session.expiresAt > Date.now() + 45000) return session.accessToken;
-    const result = await request('/auth/v1/token?grant_type=refresh_token', {
-      method: 'POST', body: { refresh_token: session.refreshToken }
-    });
-    acceptAuthResponse(result, session.userId);
-    return session.accessToken;
+    if (!pendingRefresh) {
+      const expected = session;
+      const inFlight = (async () => {
+        const result = await request('/auth/v1/token?grant_type=refresh_token', {
+          method: 'POST', body: { refresh_token: expected.refreshToken }
+        });
+        if (session !== expected) throw new Error('Sitzung wurde zwischenzeitlich geändert.');
+        acceptAuthResponse(result, expected.userId);
+        return session.accessToken;
+      })();
+      pendingRefresh = inFlight.finally(() => {
+        if (pendingRefresh === waiting) pendingRefresh = null;
+      });
+      const waiting = pendingRefresh;
+    }
+    return pendingRefresh;
   }
   async function token() {
+    const expected = session;
     try { return await refreshSession(); }
-    catch (error) { session = null; store(); throw error; }
+    catch (error) {
+      if (session === expected) invalidateSession();
+      throw error;
+    }
   }
   async function authorized(path, options = {}) {
     const credential = await token();
@@ -378,8 +431,9 @@
 
   async function loadAccount() {
     const identity = await authorized('/auth/v1/user');
-    if (!UUID.test(identity?.id) || identity.id !== session.userId) {
-      throw new Error('Identität konnte nicht sicher bestätigt werden.');
+    if (!session || !UUID.test(identity?.id) || identity.id !== session.userId) {
+      invalidateSession();
+      throw new Error('Identität konnte nicht sicher bestätigt werden. Bitte erneut anmelden.');
     }
     activeUser = identity.id;
     const user = identity.id;
@@ -390,14 +444,24 @@
       authorized('/rest/v1/passes?select=id,title,status,starts_at,expires_at&user_id=eq.' + user + '&limit=50'),
       authorized('/rest/v1/wallet_balances?select=drinks,additional_drinks,creatine,protein&user_id=eq.' + user + '&limit=1'),
       authorized('/rest/v1/studios?select=id,name,slug,active&active=eq.true&order=name.asc&limit=50'),
-      window.NordkernCatalog.loadCatalogue(),
+      window.NordkernCatalog?.loadCatalogue?.().catch(() => []) ?? Promise.resolve([]),
       authorized('/functions/v1/create-offer-checkout')
         .catch(() => ({webCheckoutEnabled:false}))
     ]);
-    if (!Array.isArray(profiles) || profiles.length !== 1 || profiles[0].id !== user ||
-        profiles[0].account_enabled !== true || !Array.isArray(selections) ||
-        !Array.isArray(memberships) || !Array.isArray(passes) || !Array.isArray(wallets) ||
-        !Array.isArray(studioList) || !Array.isArray(offers)) {
+    if (!session || session.userId !== user || activeUser !== user) {
+      throw new Error('Die Sitzung wurde während der Anfrage geändert.');
+    }
+    if (!Array.isArray(profiles) || profiles.length !== 1 ||
+        profiles[0].id !== user || profiles[0].account_enabled !== true) {
+      invalidateSession();
+      throw new Error('Dieses Mitgliedskonto ist nicht freigeschaltet oder nicht mehr zugänglich. Bitte den Support kontaktieren.');
+    }
+    if (!Array.isArray(selections) || selections.length > 1 ||
+        !Array.isArray(memberships) || memberships.length > 30 ||
+        !Array.isArray(passes) || passes.length > 50 ||
+        !Array.isArray(wallets) || wallets.length > 1 ||
+        !Array.isArray(studioList) || studioList.length > 50 ||
+        !Array.isArray(offers)) {
       throw new Error('Mitgliedsdaten konnten nicht zuverlässig geladen werden.');
     }
     studios = studioList.filter(row => UUID.test(row?.id) && row.active === true &&
@@ -812,14 +876,7 @@
   }
   async function logout() {
     const old = session;
-    session = null;activeUser = null;studioChoice = null;
-    webCheckoutEnabled = false;shopCheckoutReady = false;shopCart=[];orderSnapshot=null;store();
-    for (const id of ['nk-member-contracts','nk-web-order-history','nk-web-shop-cart',
-      'nk-order-count','nk-member-id','nk-member-name','nk-own-devices']) {
-      const node=byId(id);
-      if (node) node.replaceChildren();
-    }
-    showAccount(false);
+    invalidateSession();
     feedback('Lokal abgemeldet.');
     if (old?.accessToken) {
       try { await request('/auth/v1/logout',{method:'POST',token:old.accessToken}); }

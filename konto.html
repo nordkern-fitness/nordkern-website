@@ -28,6 +28,35 @@
         <p class="eyebrow">Schon Mitglied?</p>
         <h2 id="nk-login-title">Sicher anmelden.</h2>
         <p>Dieser Bereich ist für bereits registrierte Mitglieder gedacht. Eine neue Registrierung ist noch nicht freigeschaltet.</p>
+        <button type="button" class="nk-account-subtle" id="nk-show-signup" aria-expanded="false" aria-controls="nk-signup-form">
+          Noch kein Konto? Registrieren
+        </button>
+        <form id="nk-signup-form" class="nk-account-signup" hidden>
+          <h3>Dein Nordkern-Konto erstellen.</h3>
+          <p>Eine Registrierung erzeugt noch keine bezahlte Mitgliedschaft und keinen Zutritt. Bestätige die E-Mail, falls der Anmeldedienst das verlangt.</p>
+          <label for="nk-signup-first">Vorname</label>
+          <input id="nk-signup-first" name="firstName" autocomplete="given-name" required maxlength="100" />
+          <label for="nk-signup-last">Nachname</label>
+          <input id="nk-signup-last" name="lastName" autocomplete="family-name" required maxlength="100" />
+          <label for="nk-signup-email">E-Mail-Adresse</label>
+          <input id="nk-signup-email" name="email" type="email" autocomplete="email" required maxlength="254" />
+          <label for="nk-signup-password">Passwort (12 bis 256 Zeichen)</label>
+          <input id="nk-signup-password" name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" />
+          <label for="nk-signup-studio">Dein Startstudio</label>
+          <select id="nk-signup-studio" name="homeStudioSlug" required disabled>
+            <option value="">Studios werden geladen …</option>
+          </select>
+          <p id="nk-signup-studio-status" class="nk-account-hint" role="status">Registrierbare Studios werden geprüft.</p>
+          <div class="nk-account-consent">
+            <label for="nk-signup-terms"><input id="nk-signup-terms" name="acceptedTerms" type="checkbox" required />
+              Ich habe den <a href="hausordnung.html">Hausordnungsentwurf</a> zur Kenntnis genommen und bestätige die AGB-Erklärung für die Testregistrierung.</label>
+            <label for="nk-signup-privacy"><input id="nk-signup-privacy" name="acceptedPrivacy" type="checkbox" required />
+              Ich habe die <a href="impressum.html">Datenschutz- und Anbieterinformationen</a> gelesen und bestätige die Datenschutzangaben.</label>
+          </div>
+          <p class="nk-account-hint">Rechtliche Dokumente und der verbindliche Vertragstext müssen vor dem produktiven Betrieb gesondert freigegeben werden.</p>
+          <button type="submit" id="nk-signup-submit" disabled>Testkonto registrieren</button>
+          <button type="button" class="nk-account-subtle" id="nk-show-login">Zur Anmeldung zurück</button>
+        </form>
         <form id="nk-login-form">
           <label for="nk-login-email">E-Mail-Adresse</label>
           <input type="email" id="nk-login-email" name="email" autocomplete="email" maxlength="254" required />

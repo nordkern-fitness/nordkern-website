@@ -76,6 +76,10 @@ function seed(){
   emptyCatalogue:false,
   shopFailure:false,
   rejectLogin:false,
+  rejectRefresh:false,
+  rejectOwnProfile:false,
+  profileEnabled:true,
+  catalogueFailure:false,
   signupResponses:[],
   deviceRevokeCalls:0,
   checkoutCalls:0,
@@ -104,7 +108,13 @@ async function installFixtures(page, state=seed()){
   if(method==='OPTIONS'){await route.fulfill({status:204,headers,body:''});return;}
   let value;
   if(pathname==='/auth/v1/token'&&method==='POST'){
-   if(state.rejectLogin){await respond({message:'Invalid login credentials'},400);return;}
+   const refresh=u.searchParams.get('grant_type')==='refresh_token';
+   if(refresh && state.rejectRefresh){
+     await respond({error_code:'refresh_token_not_found',message:'Invalid Refresh Token'},401);return;
+   }
+   if(!refresh && state.rejectLogin){
+     await respond({error_code:'invalid_credentials',message:'Invalid login credentials'},400);return;
+   }
    state.signedIn=true;
    value={access_token:'a'.repeat(48),refresh_token:'r'.repeat(48),
      expires_in:3600,user:{id:USER,email:'member@nordkern.test'}};
@@ -121,8 +131,10 @@ async function installFixtures(page, state=seed()){
   }else if(pathname==='/auth/v1/recover'||pathname==='/auth/v1/resend'){
    value={};
   }else if(pathname==='/rest/v1/membership_plans'){
+   if(state.catalogueFailure){await respond({message:'unavailable'},503);return;}
    value=state.emptyCatalogue?[]:state.plans;
   }else if(pathname==='/rest/v1/pass_products'){
+   if(state.catalogueFailure){await respond({message:'unavailable'},503);return;}
    value=state.emptyCatalogue?[]:state.passes;
   }else if(pathname==='/rest/v1/shop_categories'){
    if(state.shopFailure){await respond({message:'shop offline'},503);return;}
@@ -133,8 +145,9 @@ async function installFixtures(page, state=seed()){
   }else if(pathname==='/rest/v1/studios'){
    value=[state.studio];
   }else if(pathname==='/rest/v1/profiles'){
+   if(state.rejectOwnProfile){await respond({message:'Access forbidden'},403);return;}
    value=[{id:USER,member_id:'NK-TEST-001',first_name:'Test',last_name:'Member',
-     account_enabled:true}];
+     account_enabled:state.profileEnabled}];
   }else if(pathname==='/rest/v1/member_studios'){
    value=[{studio_id:STUDIO,change_allowed_at:'2025-10-01T00:00:00Z'}];
   }else if(pathname==='/rest/v1/memberships'){

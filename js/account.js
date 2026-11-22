@@ -774,7 +774,9 @@
         acceptAuthResponse(result);
         await loadAccount();
         feedback('Konto registriert und serverseitig angemeldet. Mitgliedschaften sind weiterhin unbezahlt.');
-      } else if (result?.user && UUID.test(result.user.id)) {
+      } else if (UUID.test(result?.id) || UUID.test(result?.user?.id)) {
+        // Direct GoTrue /signup returns a top-level user object when email
+        // confirmation is enabled. Wrapped user payloads are also tolerated.
         showSignupPanel(false);
         byId('nk-login-email').value=confirmed.email;
         feedback('Registrierungsanfrage angenommen. Bitte bestätige deine E-Mail, falls eine Nachricht eintrifft. Es besteht noch keine aktive Anmeldung.');

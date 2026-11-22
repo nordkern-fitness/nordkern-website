@@ -125,8 +125,9 @@ async function installFixtures(page, state=seed()){
   }else if(pathname==='/auth/v1/signup'&&method==='POST'){
    const body=JSON.parse(request.postData()||'{}');
    state.signupResponses.push(body);
-   // Email-confirmation-required mode: no signed in session by design.
-   value={user:{id:USER,email:body.email}};
+   // Real GoTrue POST /auth/v1/signup responds with a top-level user
+   // object (not {user:{...}}) when email confirmation is required.
+   value={id:USER,email:body.email,confirmation_sent_at:'2026-11-22T10:00:00Z'};
   }else if(pathname==='/auth/v1/user'){
    if(!state.signedIn){await respond({message:'Not authenticated'},401);return;}
    value={id:USER,email:'member@nordkern.test'};

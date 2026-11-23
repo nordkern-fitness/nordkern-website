@@ -4,10 +4,32 @@
 (() => {
   "use strict";
 
-  const CONFIG = Object.freeze({
+  // The deployed site always uses the hosted publishable key. A disposable
+  // local Supabase stack may be selected only when the WEBSITE itself runs on
+  // the exact CI loopback origin. No remote target, secret key or production
+  // hostname can be injected through this test-only configuration seam.
+  const HOSTED_CONFIG = Object.freeze({
     url: "https://mfaqlfsaatmhvcqlpzoz.supabase.co",
     publishableKey: "sb_publishable_uU3OtB51Zzy8-YRKptpSzA_no2gfyVC"
   });
+  function isSupportedConfig(value) {
+    if (!value || typeof value !== "object" ||
+        typeof value.publishableKey !== "string") return false;
+    if (/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(value.url) &&
+        value.publishableKey.startsWith("sb_publishable_")) return true;
+    return window.location?.origin === "http://127.0.0.1:8765" &&
+      value.url === "http://127.0.0.1:54321" &&
+      (/^eyJ[A-Za-z0-9_-]+\./.test(value.publishableKey) &&
+       value.publishableKey.length > 60 ||
+       value.publishableKey.startsWith("sb_publishable_"));
+  }
+  const localFixture = window.NordkernIsolatedE2EConfig;
+  const CONFIG = Object.freeze(
+    localFixture?.url === "http://127.0.0.1:54321" &&
+    isSupportedConfig(localFixture)
+      ? {url: localFixture.url, publishableKey: localFixture.publishableKey}
+      : HOSTED_CONFIG
+  );
 
   const fields = {
     membership_plans: "slug,name,subtitle,price_cents,checkout_price_cents,minimum_term_months,billing_interval,credit_cycle,monthly_credits,features,promotion_badge,promotion_note,sort_order,active",
@@ -235,5 +257,5 @@
     }
   }
 
-  window.NordkernCatalog = { mount, loadCatalogue, validProduct, publicConfig: CONFIG };
+  window.NordkernCatalog = { mount, loadCatalogue, validProduct, publicConfig: CONFIG, isSupportedConfig };
 })();

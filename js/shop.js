@@ -35,8 +35,13 @@
   }
   async function loadCatalogue() {
     const cfg=window.NordkernCatalog?.publicConfig;
-    if (!cfg || !/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(cfg.url)||
-        typeof cfg.publishableKey!=="string"||!cfg.publishableKey.startsWith("sb_publishable_")) {
+    const supportedByCatalogue =
+      window.NordkernCatalog?.isSupportedConfig?.(cfg) === true;
+    const standardHosted = cfg &&
+      /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(cfg.url) &&
+      typeof cfg.publishableKey === "string" &&
+      cfg.publishableKey.startsWith("sb_publishable_");
+    if (!supportedByCatalogue && !standardHosted) {
       throw new Error("Shop-Katalog nicht konfiguriert.");
     }
     const ctl=new AbortController(),timer=window.setTimeout(()=>ctl.abort(),9000);

@@ -81,9 +81,13 @@
       start <= now && end > now && cancel > now;
   }
   function base() {
-    if (!configuration || !/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(configuration.url) ||
-        typeof configuration.publishableKey !== 'string' ||
-        !configuration.publishableKey.startsWith('sb_publishable_')) {
+    const supportedByCatalogue =
+      window.NordkernCatalog?.isSupportedConfig?.(configuration) === true;
+    const standardHosted = configuration &&
+      /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(configuration.url) &&
+      typeof configuration.publishableKey === 'string' &&
+      configuration.publishableKey.startsWith('sb_publishable_');
+    if (!supportedByCatalogue && !standardHosted) {
       throw new Error('Nordkern ist nicht korrekt konfiguriert.');
     }
     return configuration;

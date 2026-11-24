@@ -34,6 +34,32 @@ def additional_occurrences(texts, name):
                   if path != LEGAL and name.casefold() in contents.casefold())
 
 
+def unsafe_new_commit_identity(author_name, author_email, legal_name):
+    """Avoid exposing natural-person names/private mailboxes on NEW commits."""
+    if legal_name.casefold() in (author_name + " " + author_email).casefold():
+        return True
+    email = author_email.strip().lower()
+    # Historical metadata is not rewritten. For future commits require the
+    # dedicated brand identity or GitHub's no-reply / automation identity.
+    return not (email.endswith("@nordkern-fitness.de") or
+                email.endswith("@users.noreply.github.com") or
+                email.endswith("@noreply.github.com") or
+                email.endswith("@github.com"))
+
+
+def current_commit_identity_is_safe(legal_name):
+    process = subprocess.run(
+        ["git", "log", "-1", "--format=%an%n%ae%n%cn%n%ce"],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        check=True, encoding="utf-8",
+    )
+    parts = process.stdout.splitlines()
+    if len(parts) != 4:
+        return False
+    return not any(unsafe_new_commit_identity(parts[i], parts[i+1], legal_name)
+                   for i in (0, 2))
+
+
 def tracked_texts():
     result = subprocess.run(
         ["git", "ls-files", "-z"], cwd=ROOT, check=True,
@@ -66,6 +92,9 @@ def audit(preview=False):
     if legal_count < 2:
         raise ValueError("Unexpected legal identity change: manual review needed")
     extra = additional_occurrences(texts, name)
+    if not current_commit_identity_is_safe(name):
+        print("ERROR: New commit author/committer identity uses an unapproved personal address/name")
+        return 1
     print(f"PRIVACY: {legal_count} existing legally relevant mentions in "
           "impressum.html; legal source preserved, not redacted")
     if extra:

@@ -62,7 +62,8 @@ def main():
 
     total = 0
     for original in ROOT.glob("*.html"):
-        html = (PREVIEW_LEGAL_NOTICE if original.name == "impressum.html"\n                else inline_components(original.read_text(encoding="utf-8")))
+        html = (PREVIEW_LEGAL_NOTICE if original.name == "impressum.html"
+                else inline_components(original.read_text(encoding="utf-8")))
         (DEST / original.name).write_text(html, encoding="utf-8")
         total += 1
 

@@ -36,6 +36,23 @@ def inline_components(html):
     return html
 
 
+# A preview artifact is NOT a published legal imprint. Do not make a second
+# downloadable copy of the founder's personal legal data in public PR CI.
+# This notice links to the unchanged official legal page; it does not replace it.
+PREVIEW_LEGAL_NOTICE = """<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nordkern Fitness – Rechtliche Angaben (Vorschau)</title></head>
+<body style="font:16px/1.6 system-ui;max-width:700px;margin:8vh auto;padding:24px">
+<h1>Nur Entwicklungsvorschau – keine rechtliche Anbieterkennzeichnung</h1>
+<p>Dieses lokal erzeugte, nicht freigegebene Vorschaupaket ist kein öffentlicher Studio- oder Vertragsauftritt.</p>
+<p>Die rechtlichen Angaben dieser Kopie werden aus Datenschutzgründen nicht dupliziert.
+Die unveränderte rechtliche Anbieterkennzeichnung der veröffentlichten Website ist
+<a href="https://nordkern-fitness.de/impressum.html" rel="noopener noreferrer">hier erreichbar</a>.</p>
+<p>Die rechtliche Vollständigkeit der veröffentlichten Website ist vor einem weiteren geschäftlichen Angebot separat zu prüfen.</p>
+</body></html>"""
+
 def main():
     if DEST.exists():
         shutil.rmtree(DEST)
@@ -45,7 +62,7 @@ def main():
 
     total = 0
     for original in ROOT.glob("*.html"):
-        html = inline_components(original.read_text(encoding="utf-8"))
+        html = (PREVIEW_LEGAL_NOTICE if original.name == "impressum.html"\n                else inline_components(original.read_text(encoding="utf-8")))
         (DEST / original.name).write_text(html, encoding="utf-8")
         total += 1
 

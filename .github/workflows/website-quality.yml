@@ -34,8 +34,16 @@ jobs:
       - name: Test public catalogue client
         run: node --test tests/*.test.cjs
 
+      - name: Check exposure policy without printing legal name or email
+        run: |
+          python3 -m unittest discover -s tests -p 'test_privacy_audit.py'
+          python3 scripts/privacy_audit.py
+
       - name: Build double-click preview
         run: python3 scripts/build_preview.py
+
+      - name: Ensure downloadable preview contains no legal personal name
+        run: python3 scripts/privacy_audit.py --preview
 
       - name: Upload downloadable website preview
         uses: actions/upload-artifact@v4
@@ -45,13 +53,17 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      # In a public PR, do not automatically upload another unredacted copy
+      # of the entire historical legal source. Manual source export remains.
       - name: Package complete versioned website source
+        if: github.event_name == 'workflow_dispatch'
         run: |
           mkdir -p release
           git archive --format=zip --output=release/Nordkern-Website-Source.zip HEAD
           unzip -t release/Nordkern-Website-Source.zip
 
       - name: Upload complete website source
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: Nordkern-Website-Source

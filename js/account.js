@@ -427,6 +427,104 @@
     refresh.addEventListener('click',()=>{void load(true);});
     void load(true);
   }
+  function billingRecord(row,userId) {
+    const money=v=>Number.isSafeInteger(v)&&v>=0&&v<=2147483647;
+    if(!row||typeof row!=='object'||!UUID.test(row.id)||row.user_id!==userId||row.currency!=='eur'||
+       !validLedgerTimestamp(row.issued_at)||!validLedgerTimestamp(row.observed_at)||
+       typeof row.document_available!=='boolean')return false;
+    const links=[row.membership_id,row.order_id,row.pass_id];
+    if(!links.every(x=>x===null||(typeof x==='string'&&UUID.test(x)))||links.filter(x=>x!==null).length!==1||
+       ![row.total_cents,row.provider_paid_cents,row.remaining_cents,row.pre_credit_cents,row.post_credit_cents].every(money)||
+       !(row.received_cents===null||money(row.received_cents))||!(row.refunded_cents===null||money(row.refunded_cents)))return false;
+    if(row.refunded_cents!==null&&(row.received_cents===null||row.refunded_cents>row.received_cents))return false;
+    if(row.number!==null&&(typeof row.number!=='string'||!row.number.length||row.number.length>180))return false;
+    if(row.source_kind==='invoice')return row.parent_id===null&&typeof row.number==='string'&&['open','paid','void','uncollectible'].includes(row.provider_status);
+    if(row.source_kind==='credit_note')return typeof row.parent_id==='string'&&UUID.test(row.parent_id)&&typeof row.number==='string'&&['issued','void'].includes(row.provider_status)&&row.received_cents===null&&row.provider_paid_cents===0;
+    return row.source_kind==='receipt'&&row.parent_id===null&&row.membership_id===null&&row.provider_status==='succeeded'&&money(row.received_cents)&&row.received_cents>0&&row.received_cents===row.total_cents;
+  }
+  function safeBillingDocument(value) {
+    if(typeof value!=='string'||value.length>2048||/[\s<>]/.test(value))return false;
+    try{
+      const u=new URL(value);
+      return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&['pay.stripe.com','invoice.stripe.com'].includes(u.hostname)&&
+        ['/invoice/','/i/','/receipts/','/credit_notes/'].some(prefix=>u.pathname.startsWith(prefix));
+    }catch{return false;}
+  }
+  function billingLabel(row){
+    if(row.source_kind==='credit_note')return row.provider_status==='void'?'Storniert':'Ausgestellt';
+    if(row.provider_status==='void')return 'Storniert';
+    if(row.provider_status==='uncollectible')return 'Uneinbringlich';
+    if(row.received_cents!==null&&row.refunded_cents!==null&&row.refunded_cents>0)return row.refunded_cents===row.received_cents?'Vollständig erstattet':'Teilweise erstattet';
+    if(row.provider_status==='open')return 'Offen';
+    return row.received_cents===null?'Bei Stripe als bezahlt erfasst; Geldfluss nicht bestätigt':'Zahlung bestätigt';
+  }
+  function mountBillingRecords(userId,scope){
+    const area=byId('nk-member-contracts'),card=element('section');
+    card.className='nk-account-contract';
+    card.appendChild(element('h3','Rechnungen und Zahlungen'));
+    card.appendChild(element('p','Originalbelege aus Stripe, Testumgebung. Zahlungsbelege sind keine Rechnungen.'));
+    const rows=element('div'),status=element('p','Rechnungsquelle wird geprüft …');
+    status.setAttribute('role','status');
+    const more=element('button','Weitere Belege laden'),refresh=element('button','Rechnungen aktualisieren');
+    more.type=refresh.type='button';more.className=refresh.className='nk-account-subtle';more.hidden=true;
+    card.appendChild(rows);card.appendChild(status);card.appendChild(more);card.appendChild(refresh);area.appendChild(card);
+    let cursor=null,pending=false;const known=new Set();
+    const current=()=>sessionScope.isCurrent(scope)&&session?.userId===userId&&activeUser===userId&&card.isConnected;
+    const openDoc=async(row,button)=>{
+      if(!current())return;
+      button.disabled=true;
+      try{
+        const url=await authorized('/rest/v1/rpc/get_billing_document',{method:'POST',body:{p_record_id:row.id}},scope);
+        if(!current())return;
+        if(!safeBillingDocument(url))throw Error('document_unavailable');
+        // Same-tab navigation avoids blocked asynchronous popups and opener access.
+        window.location.assign(url);
+      }catch{if(current())status.textContent='Originaldokument derzeit nicht sicher verfügbar.';}
+      finally{if(current())button.disabled=false;}
+    };
+    const load=async(reset)=>{
+      if(pending||!current()||(!reset&&!cursor))return;
+      pending=true;refresh.disabled=more.disabled=true;
+      if(reset){cursor=null;known.clear();rows.replaceChildren();}
+      status.textContent='Belege werden geladen …';
+      try{
+        const page=await authorized('/rest/v1/rpc/list_billing_records',{method:'POST',
+          body:{p_user_id:userId,p_before:cursor?.issued_at??null,p_before_id:cursor?.id??null}},scope);
+        if(!current())return;
+        if(!Array.isArray(page)||page.length>31||!page.every(row=>billingRecord(row,userId))||
+           new Set(page.map(row=>row.id)).size!==page.length||(cursor&&page.some(row=>row.id===cursor.id)))throw Error('invalid_billing_records');
+        const entries=page.slice(0,30);
+        for(const row of entries){
+          if(known.has(row.id))continue;known.add(row.id);
+          const entry=element('section');entry.className='nk-account-order';
+          entry.appendChild(element('strong',(row.source_kind==='invoice'?'Rechnung':row.source_kind==='credit_note'?'Rechnungskorrektur':'Zahlungsbeleg')+(row.number?' '+row.number:'')));
+          entry.appendChild(element('p',date(row.issued_at)+' · '+billingLabel(row)+' · '+euro(row.total_cents)));
+          if(row.source_kind!=='credit_note'){
+            entry.appendChild(element('p','Bestätigter Geldfluss: '+(row.received_cents===null?'nicht bestätigt':euro(row.received_cents))));
+            entry.appendChild(element('p','Bestätigte Erstattung: '+(row.refunded_cents===null?'nicht bestätigt':euro(row.refunded_cents))));
+            if(row.source_kind==='invoice'){
+              entry.appendChild(element('p','Offener Betrag laut Stripe: '+euro(row.remaining_cents)));
+              entry.appendChild(element('p','Korrekturen vor / nach Zahlung: '+euro(row.pre_credit_cents)+' / '+euro(row.post_credit_cents)));
+            }
+          }
+          entry.appendChild(element('p',(row.membership_id?'Mitgliedschaft':row.order_id?'Bestellung':'Pass')+' · Stand '+new Date(row.observed_at).toLocaleString('de-DE')));
+          if(row.document_available){
+            const button=element('button','Originaldokument bei Stripe öffnen');button.type='button';button.className='nk-account-subtle';
+            button.addEventListener('click',()=>{void openDoc(row,button);});entry.appendChild(button);
+          }else entry.appendChild(element('p','Kein Originaldokument verfügbar.'));
+          rows.appendChild(entry);
+        }
+        const last=entries.at(-1);cursor=page.length>30&&last?{id:last.id,issued_at:last.issued_at}:null;
+        more.hidden=!cursor;status.textContent=known.size?known.size+' Belege geladen.':'Keine erfassten Belege. Ältere Stripe-Belege können noch fehlen.';
+      }catch{
+        if(!current())return;
+        cursor=null;known.clear();rows.replaceChildren();more.hidden=true;
+        status.textContent='Rechnungsquelle derzeit nicht verfügbar. Bitte erneut versuchen.';
+      }finally{pending=false;if(current())refresh.disabled=more.disabled=false;}
+    };
+    more.addEventListener('click',()=>{void load(false);});refresh.addEventListener('click',()=>{void load(true);});
+    void load(true);
+  }
   function orderStatusName(status) {
     return {
       pending_payment:'Zahlung ausstehend',paid:'Bezahlt',
@@ -607,6 +705,7 @@
       ' · Nächster Wechsel frühestens ' + date(studioChoice.change_allowed_at);
     renderContractOverview(memberships,passes,wallets[0]??null,Date.now());
     mountWalletLedger(user,scope);
+    mountBillingRecords(user,scope);
     renderOptions(byId('nk-offer-select'), catalogue.map((row, index) => ({
       id:String(index),name:String(row.item.name ?? row.item.title) + ' · ' +
         new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(
@@ -1073,6 +1172,6 @@
   }
   window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,
     paidMembership,contractStatusLabel,detailsForContract,orderStatusName,
-    memberSectionFromHash,validateSignupInput,createSessionScope,validLedgerEntry,walletLedgerPath,walletLedgerPage,mount};
+    memberSectionFromHash,validateSignupInput,createSessionScope,validLedgerEntry,walletLedgerPath,walletLedgerPage,billingRecord,safeBillingDocument,billingLabel,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

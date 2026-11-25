@@ -39,6 +39,9 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_privacy_audit.py'
           python3 scripts/privacy_audit.py
 
+      - name: Test local private preview HTTP boundary
+        run: python3 -m unittest discover -s tests -p 'test_private_preview.py'
+
       - name: Build double-click preview
         run: python3 scripts/build_preview.py
 
@@ -46,6 +49,7 @@ jobs:
         run: python3 scripts/privacy_audit.py --preview
 
       - name: Upload downloadable website preview
+        if: github.event.repository.private == true && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: Nordkern-Website-Vorschau
@@ -56,14 +60,14 @@ jobs:
       # In a public PR, do not automatically upload another unredacted copy
       # of the entire historical legal source. Manual source export remains.
       - name: Package complete versioned website source
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event.repository.private == true && github.event_name == 'workflow_dispatch'
         run: |
           mkdir -p release
           git archive --format=zip --output=release/Nordkern-Website-Source.zip HEAD
           unzip -t release/Nordkern-Website-Source.zip
 
       - name: Upload complete website source
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event.repository.private == true && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: Nordkern-Website-Source

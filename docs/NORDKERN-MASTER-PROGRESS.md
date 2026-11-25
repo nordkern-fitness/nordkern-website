@@ -1,5 +1,9 @@
 # NORDKERN FITNESS · MASTER PROGRESS
 
+## 9.3 – Master-Fortsetzung: Produkt- und Betriebsverwaltung (25.11.2026)
+
+Website-Ausgang `a42d8e93`. Neue Verwaltungsoberflächen und neun geordnete SQL-Kandidaten befinden sich im App PR #4 (Implementierungsstand `3a4e6409`). Website-Funktionscode in dieser Fortsetzung unverändert; bestehende Rechnungs-, Vertrags-, Konto- und Shop-Funktionen bleiben erhalten. Produktbilder, öffentliche Studio-Angebote und veröffentlichte Öffnungszeiten noch nicht integriert; physischer Versand bleibt gesperrt. App-Clienttests 10/10 lokal erfolgreich, gemeinsame PostgreSQL-CI ohne Runner (45703102034); keine DEV-Migration oder Datenbankfreigabe. Keine Änderung an Main, öffentlicher Website, DNS, Pages, Sichtbarkeit, Rechtstexten oder Zahlungen. Gesamtauftrag bleibt offen.
+
 ## 9.3 – Master-Fortsetzung: echte Rechnungsquellen im Mitgliederbereich (25.11.2026)
 
 Ausgang `a08ba5aa`. Implementierungscommit `74af31d33500ffb6853d5e14f01f82bc224fe264`: Rechnungsübersicht auf Basis der neuen scoped Billing-RPCs im bestehenden Kontoportal; getrennte Rechnungs-, Zahlungsbeleg- und Korrekturarten, Zahlungs-/Erstattungsstatus, Pagination und Originaldokument-Validierung. Keine Guthabenbuchungen als Rechnung ausgegeben. Bei fehlenden oder nicht freigegebenen RPCs kein fingierter Datenbestand. Backend-Kandidat nur in App PR #4, Featureflag aus, keine DEV-Migration. Kein Stripe-Kauf oder Backfill; Dokumentlinks können ablaufen, keine vollständige PDF-Archivierung. Website-CI am Implementierungscommit: Quality 45685282479 success; Chromium E2E 45685282655 success (Mock); read-only DEV-Browserintegration 45685282505 success. Beide Drafts unverändert privat im Entwicklungsworkflow bzw. ohne Veröffentlichung; keine Änderung an Main, Pages, Domain, Sichtbarkeit, DEV-Konten oder Rechtstexten. Weitere Funktions-/Datenbank-/Produktionsfreigaben offen; Gesamtauftrag bleibt bestehen.

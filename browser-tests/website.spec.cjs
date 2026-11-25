@@ -78,8 +78,16 @@ test('authenticated contract, wallet, order statuses and browser refresh show ba
  await login(page);
  await expect(page.locator('#nk-member-contracts')).toContainText('Basic Original');
  await expect(page.locator('#nk-member-contracts')).toContainText('29,90');
- await expect(page.locator('#nk-member-contracts')).toContainText('Freigetränke: 3');
- await expect(page.locator('#nk-member-contracts')).toContainText('Mindestlaufzeit');
+ const wallet=page.locator('.nk-overview-unit').filter({has:page.getByText('Freigetränke',{exact:true})});
+ await expect(wallet.locator('strong')).toHaveText('3');
+ await expect(page.locator('.nk-overview-unit')).toHaveCount(4);
+ const contract=page.locator('.nk-overview-plan').filter({hasText:'Basic Original'});
+ await expect(contract.locator('.nk-overview-state')).toHaveAttribute('data-active','true');
+ await expect(contract.locator('details')).not.toHaveAttribute('open','');
+ await contract.locator('summary').focus();
+ await page.keyboard.press('Enter');
+ await expect(contract.locator('details')).toHaveAttribute('open','');
+ await expect(contract.getByText(/Mindestlaufzeit bis:/)).toBeVisible();
  await expect(page.locator('#nk-web-order-history')).toContainText('NK-TEST-001');
  await expect(page.locator('#nk-web-order-history')).toContainText('NK-TEST-002');
  await page.locator('#nk-order-filter').selectOption('paid');
@@ -244,4 +252,17 @@ test('8.6 unconfirmed GoTrue email displays confirmation guidance and no members
  await expect(page.locator('#nk-account-error')).toContainText('bestätige zuerst');
  await expect(page.locator('#nk-member-panel')).toBeHidden();
  expect(await page.evaluate(()=>sessionStorage.getItem('nordkern-website-session-v1'))).toBeNull();
+});
+
+test('new account overview preserves unknown balances and never interprets markup',async({page})=>{
+ await login(page);
+ await page.evaluate(()=>{
+   const area=document.getElementById('nk-member-contracts');
+   window.NordkernAccountOverview.render(area,[{name:'<img src=x onerror=alert(1)>',active:false,lines:['Bezahlter Zeitraum bis: nicht bestätigt','Vertragspreis nicht bestätigt.']}],[],{drinks:0,additional_drinks:-1,creatine:null,protein:1.5});
+ });
+ await expect(page.locator('.nk-overview-unit strong')).toHaveText(['0','–','–','–']);
+ await expect(page.locator('.nk-overview-state')).toHaveAttribute('data-active','false');
+ await expect(page.locator('#nk-member-contracts img')).toHaveCount(0);
+ await expect(page.locator('.nk-overview-plan h4')).toHaveText('<img src=x onerror=alert(1)>');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
 });

@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEST = ROOT / "preview"
 
 COMPONENTS = {
+    "home-intro": "components/home-intro.html",
     "header": "components/header.html",
     "footer": "components/footer.html",
     "contact-form": "components/contact-form.html",

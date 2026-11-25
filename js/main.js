@@ -64,6 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const shouldReduceMotion = () => prefersReducedMotion.matches;
 
   const componentFiles = [
+    { selector: '[data-home-intro]', file: 'components/home-intro.html' },
     {
       selector: selectors.headerSlot,
       file: "components/header.html"

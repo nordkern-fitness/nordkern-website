@@ -344,6 +344,81 @@
     }
     area.appendChild(walletCard);
   }
+  const walletKinds = Object.freeze({drinks:'Freigetränke',additional_drinks:'Zusätzliche Getränke',creatine:'Kreatin',protein:'Protein'});
+  const ledgerTimestamp = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}(?::?\d{2})?)$/;
+  function validLedgerTimestamp(v) {
+    return typeof v==='string' && ledgerTimestamp.test(v) && Number.isFinite(Date.parse(v));
+  }
+  function validLedgerEntry(row,userId) {
+    return row && typeof row==='object' && !Array.isArray(row) &&
+      typeof row.id==='string' && UUID.test(row.id) && row.user_id===userId &&
+      typeof row.kind==='string' && Object.prototype.hasOwnProperty.call(walletKinds,row.kind) &&
+      Number.isSafeInteger(row.amount) && row.amount!==0 &&
+      typeof row.reason==='string' && row.reason.length<=1000 && validLedgerTimestamp(row.created_at);
+  }
+  function walletLedgerPath(userId,cursor=null) {
+    if (!UUID.test(userId) || (cursor && (!UUID.test(cursor.id) || !validLedgerTimestamp(cursor.created_at))))
+      throw new Error('Ungültiger Buchungsverlauf.');
+    const path='/rest/v1/wallet_ledger?select=id,user_id,kind,amount,reason,created_at&user_id=eq.'+
+      userId+'&order=created_at.desc,id.desc&limit=31';
+    return cursor?path+'&or='+encodeURIComponent('(created_at.lt.'+cursor.created_at+
+      ',and(created_at.eq.'+cursor.created_at+',id.lt.'+cursor.id+'))'):path;
+  }
+  function walletLedgerPage(rows,userId,cursor=null) {
+    if(!Array.isArray(rows)||rows.length>31||!rows.every(row=>validLedgerEntry(row,userId))||
+      new Set(rows.map(row=>row.id)).size!==rows.length||(cursor&&rows.some(row=>row.id===cursor.id)))
+      throw new Error('Guthabenbuchungen konnten nicht sicher bestätigt werden.');
+    const entries=rows.slice(0,30),last=entries.at(-1);
+    return {entries,next:rows.length>30&&last?{id:last.id,created_at:last.created_at}:null};
+  }
+  function mountWalletLedger(userId,scope) {
+    const area=byId('nk-member-contracts');
+    const card=element('section');card.className='nk-account-contract';
+    card.appendChild(element('h3','Guthabenverlauf'));
+    card.appendChild(element('p','Bestätigte Buchungen in Einheiten, keine Geldbeträge.'));
+    const rows=element('div'),status=element('p','Buchungen werden geladen …');
+    status.setAttribute('role','status');
+    const more=element('button','Weitere Buchungen laden');more.type='button';
+    more.className='nk-account-subtle';more.hidden=true;
+    const refresh=element('button','Buchungen aktualisieren');refresh.type='button';
+    refresh.className='nk-account-subtle';
+    card.appendChild(rows);card.appendChild(status);card.appendChild(more);card.appendChild(refresh);
+    area.appendChild(card);
+    let cursor=null,pending=false;const known=new Set();
+    const current=()=>sessionScope.isCurrent(scope)&&session?.userId===userId&&activeUser===userId&&card.isConnected;
+    const load=async(reset)=>{
+      if(pending||!current()||(!reset&&!cursor))return;
+      pending=true;more.disabled=true;refresh.disabled=true;
+      if(reset){cursor=null;known.clear();rows.replaceChildren();}
+      status.textContent='Buchungen werden geladen …';
+      try{
+        const data=await authorized(walletLedgerPath(userId,cursor),{},scope);
+        if(!current())return;
+        const page=walletLedgerPage(data,userId,cursor);
+        for(const row of page.entries){
+          if(known.has(row.id))continue;
+          known.add(row.id);
+          const line=element('p');
+          line.appendChild(element('strong',(row.amount>0?'+':'')+row.amount+' · '+walletKinds[row.kind]));
+          line.appendChild(element('span',' · '+(row.reason||'Buchung')+' · '+
+            new Date(row.created_at).toLocaleString('de-DE')));
+          rows.appendChild(line);
+        }
+        cursor=page.next;more.hidden=!cursor;
+        status.textContent=known.size?known.size+' Buchungen geladen.':'Noch keine bestätigten Buchungen.';
+      }catch{
+        if(!current())return;
+        status.textContent='Guthabenverlauf derzeit nicht verfügbar. Bitte erneut versuchen.';
+        more.hidden=!cursor;
+      }finally{
+        pending=false;
+        if(current()){more.disabled=false;refresh.disabled=false;}
+      }
+    };
+    more.addEventListener('click',()=>{void load(false);});
+    refresh.addEventListener('click',()=>{void load(true);});
+    void load(true);
+  }
   function orderStatusName(status) {
     return {
       pending_payment:'Zahlung ausstehend',paid:'Bezahlt',
@@ -523,6 +598,7 @@
     if (locked) byId('nk-studio-status').textContent +=
       ' · Nächster Wechsel frühestens ' + date(studioChoice.change_allowed_at);
     renderContractOverview(memberships,passes,wallets[0]??null,Date.now());
+    mountWalletLedger(user,scope);
     renderOptions(byId('nk-offer-select'), catalogue.map((row, index) => ({
       id:String(index),name:String(row.item.name ?? row.item.title) + ' · ' +
         new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(
@@ -989,6 +1065,6 @@
   }
   window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,
     paidMembership,contractStatusLabel,detailsForContract,orderStatusName,
-    memberSectionFromHash,validateSignupInput,createSessionScope,mount};
+    memberSectionFromHash,validateSignupInput,createSessionScope,validLedgerEntry,walletLedgerPath,walletLedgerPage,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

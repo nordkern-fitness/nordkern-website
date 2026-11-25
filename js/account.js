@@ -283,19 +283,27 @@
     const active = paidMembership(m, now);
     const lines = [
       'Status: ' + String(m?.status ?? 'unbekannt'),
+      'Vertragsbeginn: ' + date(m?.starts_at),
       'Bezahlter Zeitraum bis: ' + date(m?.current_period_end),
     ];
     if (Number.isSafeInteger(m?.contract_price_cents) &&
         m.contract_price_cents >= 0 && m?.currency === 'eur') {
-      lines.push('Dein bestätigter Vertragspreis: ' +
+      lines.push('Bestätigter Vertragspreis: ' +
         euro(m.contract_price_cents) +
         (snapshot?.billing_interval === 'month' ? ' monatlich' : ''));
-    }
+    } else lines.push('Vertragspreis nicht bestätigt.');
     if (m?.minimum_term_ends_at) {
       lines.push('Mindestlaufzeit bis: ' + date(m.minimum_term_ends_at));
     }
     if (m?.cancellation_effective_at) {
       lines.push('Kündigung vorgemerkt zum: ' + date(m.cancellation_effective_at));
+    }
+    const included=snapshot?.monthly_credits;
+    if(included&&typeof included==='object'&&!Array.isArray(included)){
+      for(const [key,label] of Object.entries({drinks:'Freigetränke',creatine:'Kreatin',protein:'Protein'})){
+        const value=included[key];
+        if(Number.isSafeInteger(value)&&value>=0)lines.push('Vertragliches Monatskontingent '+label+': '+value);
+      }
     }
     return { name:safeName, active, lines };
   }

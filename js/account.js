@@ -20,6 +20,20 @@
   let orderSnapshot = null;
   let signupStudios = [];
   let pendingRefresh = null;
+  const sessionScope = createSessionScope();
+
+  function createSessionScope() {
+    let generation = 0;
+    const isCurrent = expected => expected === generation;
+    return Object.freeze({
+      capture: () => generation,
+      advance: () => { generation += 1; return generation; },
+      isCurrent,
+      assertCurrent(expected) {
+        if (!isCurrent(expected)) throw new Error('Die Sitzung wurde während der Anfrage geändert.');
+      }
+    });
+  }
 
   function validSession(value) {
     return !!value && typeof value === 'object' &&
@@ -105,7 +119,7 @@
       else sessionStorage.removeItem(KEY);
     } catch { /* Store in memory when sessionStorage is disabled. */ }
   }
-  async function request(path, { method = 'GET', body, token, headers = {} } = {}) {
+  async function request(path, { method = 'GET', body, token, headers = {}, scope = sessionScope.capture() } = {}) {
     const { url, publishableKey } = base();
     if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Ungültiger Dienstpfad.');
     const ctl = new AbortController();
@@ -130,7 +144,7 @@
         }
         if (response.status === 429) throw new Error('Zu viele Versuche. Bitte warte, bevor du es erneut probierst.');
         if (response.status === 401 || response.status === 403) {
-          if (token && session?.accessToken === token) invalidateSession();
+          if (token && sessionScope.isCurrent(scope) && session?.accessToken === token) invalidateSession();
           throw new Error('Deine Sitzung ist nicht mehr gültig oder der Zugriff wurde verweigert. Bitte erneut anmelden.');
         }
         if (response.status === 400) throw new Error('Der Anmeldedienst hat die Anfrage abgelehnt. Bitte die Angaben prüfen.');
@@ -155,10 +169,17 @@
     if (!validSession(next) || (previousUserId && next.userId !== previousUserId)) {
       throw new Error('Die Antwort des Anmeldedienstes ist unvollständig.');
     }
+    if (!previousUserId) { sessionScope.advance(); pendingRefresh = null; }
     session = next;
     store();
   }
   function invalidateSession() {
+    sessionScope.advance();
+    pendingRefresh = null;
+    if (session) {
+      try { window.NordkernShopCart?.writeCart([]); } catch { /* storage unavailable */ }
+    }
+    shopCart = [];
     session = null;
     activeUser = null;
     studioChoice = null;
@@ -171,7 +192,8 @@
     pendingShopCheckout = null;
     store();
     for (const id of ['nk-member-contracts','nk-web-order-history','nk-web-shop-cart',
-      'nk-order-count','nk-member-id','nk-member-name','nk-own-devices']) {
+      'nk-order-count','nk-member-id','nk-member-name','nk-own-devices',
+      'nk-studio-status','nk-studio-select','nk-offer-select']) {
       const node = byId(id);
       if (node) node.replaceChildren();
     }
@@ -187,10 +209,12 @@
     if (session.expiresAt > Date.now() + 45000) return session.accessToken;
     if (!pendingRefresh) {
       const expected = session;
+      const scope = sessionScope.capture();
       const inFlight = (async () => {
         const result = await request('/auth/v1/token?grant_type=refresh_token', {
-          method: 'POST', body: { refresh_token: expected.refreshToken }
+          method: 'POST', body: { refresh_token: expected.refreshToken }, scope
         });
+        sessionScope.assertCurrent(scope);
         if (session !== expected) throw new Error('Sitzung wurde zwischenzeitlich geändert.');
         acceptAuthResponse(result, expected.userId);
         return session.accessToken;
@@ -202,17 +226,24 @@
     }
     return pendingRefresh;
   }
-  async function token() {
+  async function token(scope = sessionScope.capture()) {
+    sessionScope.assertCurrent(scope);
     const expected = session;
-    try { return await refreshSession(); }
-    catch (error) {
-      if (session === expected) invalidateSession();
+    try {
+      const credential = await refreshSession();
+      sessionScope.assertCurrent(scope);
+      return credential;
+    } catch (error) {
+      if (sessionScope.isCurrent(scope) && session === expected) invalidateSession();
       throw error;
     }
   }
-  async function authorized(path, options = {}) {
-    const credential = await token();
-    return request(path, { ...options, token: credential });
+  async function authorized(path, options = {}, scope = sessionScope.capture()) {
+    const credential = await token(scope);
+    sessionScope.assertCurrent(scope);
+    const result = await request(path, { ...options, token: credential, scope });
+    sessionScope.assertCurrent(scope);
+    return result;
   }
   function list(node, rows) {
     node.replaceChildren();
@@ -360,6 +391,7 @@
     }
   }
   function renderPortalCart(products, canCheckout) {
+    const scope = sessionScope.capture();
     const cartApi = window.NordkernShopCart;
     const display = byId('nk-web-shop-cart');
     const status = byId('nk-web-shop-checkout-status');
@@ -382,6 +414,7 @@
       controls.className = 'nk-account-cart-actions';
       const quantity = element('span',line.quantity);
       const change = (delta) => {
+        if (!sessionScope.isCurrent(scope)) return;
         try {
           cartApi.writeCart(cartApi.updateCart(cartApi.readCart(),product.id,delta));
           pendingShopCheckout=null;
@@ -434,7 +467,9 @@
   }
 
   async function loadAccount() {
-    const identity = await authorized('/auth/v1/user');
+    const scope = sessionScope.capture();
+    const identity = await authorized('/auth/v1/user', {}, scope);
+    sessionScope.assertCurrent(scope);
     if (!session || !UUID.test(identity?.id) || identity.id !== session.userId) {
       invalidateSession();
       throw new Error('Identität konnte nicht sicher bestätigt werden. Bitte erneut anmelden.');
@@ -452,6 +487,7 @@
       authorized('/functions/v1/create-offer-checkout')
         .catch(() => ({webCheckoutEnabled:false}))
     ]);
+    sessionScope.assertCurrent(scope);
     if (!session || session.userId !== user || activeUser !== user) {
       throw new Error('Die Sitzung wurde während der Anfrage geändert.');
     }
@@ -503,13 +539,14 @@
       ? 'Stripe-Testbuchungen sind serverseitig freigeschaltet. Es werden keine Live-Zahlungen durchgeführt.'
       : 'Testbuchungen sind noch nicht freigeschaltet. Du kannst Tarife und Kontostand trotzdem ansehen.';
     showAccount(true);
-    void loadOwnDevices(user).catch(error=>{
-      if(session?.userId===user && activeUser===user){
+    void loadOwnDevices(user,scope).catch(error=>{
+      if(sessionScope.isCurrent(scope) && session?.userId===user && activeUser===user){
         byId('nk-own-devices').textContent=error instanceof Error
           ? error.message : 'Geräteliste konnte nicht geprüft werden.';
       }
     });
-    await loadShopAccount(checkoutAvailable,user);
+    await loadShopAccount(checkoutAvailable,user,scope);
+    sessionScope.assertCurrent(scope);
     const returnStatus = new URLSearchParams(window.location.search).get('status');
     if (returnStatus === 'success') {
       feedback('Zurück vom Stripe-Testcheckout. Eine Weiterleitung ist kein Zahlungsnachweis. Nutze „Daten aktualisieren“, bis die Zahlung serverseitig bestätigt ist.');
@@ -527,13 +564,15 @@
     if (textValue !== undefined) node.textContent = String(textValue);
     return node;
   };
-  async function loadOwnDevices(userId){
+  async function loadOwnDevices(userId,scope=sessionScope.capture()){
+    sessionScope.assertCurrent(scope);
     if(!session || session.userId!==userId || activeUser!==userId || !UUID.test(userId))
       throw new Error('Bitte erneut anmelden, um Geräte zu verwalten.');
     const area=byId('nk-own-devices');
     area.textContent='Geräteberechtigungen werden vom Server geprüft.';
     const devices=await authorized('/rest/v1/devices?select=id,user_id,platform,last_seen_at,trusted_at,revoked_at&user_id=eq.'+
-      userId+'&order=created_at.desc&limit=20');
+      userId+'&order=created_at.desc&limit=20',{},scope);
+    if(!sessionScope.isCurrent(scope))return;
     if(!session || session.userId!==userId || activeUser!==userId)return;
     if(!Array.isArray(devices)||devices.length>20||devices.some(item=>
        !UUID.test(item?.id)||item.user_id!==userId||
@@ -563,23 +602,26 @@
         button.type='button';button.className='nk-account-subtle';
         button.setAttribute('aria-label','QR-Zutritt für '+device.platform+' Gerät widerrufen');
         button.addEventListener('click',()=>{void run(async()=>{
+          sessionScope.assertCurrent(scope);
           if(!window.confirm('QR-Zutritt für dieses Gerät sofort sperren? Eine erneute Registrierung ist danach erforderlich.'))return;
           const result=await authorized('/rest/v1/rpc/revoke_own_device',{
             method:'POST',body:{p_device_id:device.id}
-          });
+          },scope);
           if(result!==true && result!==false)
             throw new Error('Gerätesperre wurde nicht bestätigt.');
-          await loadOwnDevices(userId);
+          await loadOwnDevices(userId,scope);
+          sessionScope.assertCurrent(scope);
           feedback(result===true
             ?'QR-Zutritt dieses Geräts wurde serverseitig gesperrt.'
-            :'Dieses Gerät war bereits gesperrt.');
+            :'Gerätesperre nicht eindeutig bestätigt. Aktualisierte Geräteliste prüfen.',result!==true);
         });});
         row.appendChild(button);
       }
       area.appendChild(row);
     }
   }
-  async function loadShopAccount(canCheckout,userId) {
+  async function loadShopAccount(canCheckout,userId,scope=sessionScope.capture()) {
+    sessionScope.assertCurrent(scope);
     const display=byId('nk-web-shop-cart');
     const status=byId('nk-web-shop-checkout-status');
     const history=byId('nk-web-order-history');
@@ -595,8 +637,9 @@
       const [catalogue,orders]=await Promise.all([
         window.NordkernShop.loadCatalogue(),
         authorized('/rest/v1/orders?select=id,user_id,public_number,status,currency,total_cents,created_at,paid_at,refunded_cents&user_id=eq.'+
-          userId+'&order=created_at.desc&limit=30')
+          userId+'&order=created_at.desc&limit=30',{},scope)
       ]);
+      sessionScope.assertCurrent(scope);
       if(!Array.isArray(orders)||orders.length>30||orders.some(order=>
         !UUID.test(order?.id)||order.user_id!==userId||order.currency!=='eur'||
         typeof order.total_cents!=='number'||!Number.isSafeInteger(order.total_cents)||
@@ -606,7 +649,8 @@
       const ids=orders.map(order=>order.id);
       const items=ids.length ? await authorized(
         '/rest/v1/order_items?select=id,order_id,title,quantity,unit_price_cents&order_id=in.('+
-        ids.join(',')+')&limit=200') : [];
+        ids.join(',')+')&limit=200',{},scope) : [];
+      sessionScope.assertCurrent(scope);
       if(!Array.isArray(items)||items.length>200||
         items.some(item=>!UUID.test(item?.id)||!ids.includes(item.order_id)||
           typeof item.title!=='string'||!Number.isSafeInteger(item.quantity)||
@@ -618,6 +662,7 @@
       renderOrders();
       renderPortalCart(catalogue.products,canCheckout);
     } catch(error) {
+      if(!sessionScope.isCurrent(scope))return;
       shopCheckoutReady=false;
       orderSnapshot=null;
       byId('nk-order-count').textContent='Bestellhistorie nicht verfügbar.';
@@ -753,6 +798,7 @@
   async function signup(event) {
     event.preventDefault();
     await run(async()=>{
+      const scope=sessionScope.capture();
       const form=event.currentTarget;
       const fields=form.elements;
       const confirmed=validateSignupInput({
@@ -772,6 +818,7 @@
           },
         },
       });
+      sessionScope.assertCurrent(scope);
       // Email confirmation may be required: no access token means no login.
       form.elements.password.value='';
       if (result?.access_token && result?.refresh_token && result?.user) {
@@ -793,6 +840,7 @@
   async function login(event) {
     event.preventDefault();
     await run(async () => {
+      const scope=sessionScope.capture();
       const form = event.currentTarget;
       const email = String(form.elements.email.value ?? '').trim();
       const password = String(form.elements.password.value ?? '');
@@ -800,6 +848,7 @@
       const result = await request('/auth/v1/token?grant_type=password', {
         method:'POST', body:{ email, password }
       });
+      sessionScope.assertCurrent(scope);
       acceptAuthResponse(result);
       form.elements.password.value = '';
       await loadAccount();
@@ -883,10 +932,11 @@
   async function logout() {
     const old = session;
     invalidateSession();
+    const scope=sessionScope.capture();
     feedback('Lokal abgemeldet.');
     if (old?.accessToken) {
       try { await request('/auth/v1/logout',{method:'POST',token:old.accessToken}); }
-      catch { feedback('Lokal abgemeldet. Die serverseitige Sitzung konnte nicht widerrufen werden.',true); }
+      catch { if(sessionScope.isCurrent(scope))feedback('Lokal abgemeldet. Die serverseitige Sitzung konnte nicht widerrufen werden.',true); }
     }
   }
   async function mount() {
@@ -939,6 +989,6 @@
   }
   window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,
     paidMembership,contractStatusLabel,detailsForContract,orderStatusName,
-    memberSectionFromHash,validateSignupInput,mount};
+    memberSectionFromHash,validateSignupInput,createSessionScope,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

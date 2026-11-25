@@ -309,6 +309,14 @@
   }
   function renderContractOverview(memberships, passes, wallet, now) {
     const area = byId('nk-member-contracts');
+    if (window.NordkernAccountOverview?.render) {
+      window.NordkernAccountOverview.render(area, memberships.map(m=>detailsForContract(m,now)),
+        passes.map(pass=>({
+          title:typeof pass?.title==='string'&&pass.title.length<=180?pass.title:'Pass',
+          lines:['Status: '+String(pass?.status??'unbekannt'),'Gültig ab: '+date(pass?.starts_at),'Gültig bis: '+date(pass?.expires_at)]
+        })),wallet);
+      return;
+    }
     area.replaceChildren();
     if (!memberships.length && !passes.length) {
       area.appendChild(element('p','Noch keine bestätigten Verträge oder Pässe vorhanden.'));

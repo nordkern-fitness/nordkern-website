@@ -1,5 +1,11 @@
 # NORDKERN FITNESS · MASTER PROGRESS
 
+## 9.3 – Konto- und Bestellsicherheit im laufenden Master-Auftrag (25.11.2026)
+
+Implementierungscommit `26186782c0e47135ee9f2ab2dec0ce37edb81d96`: Login-Lebensdauer für autorisierte Anfragen, Refresh, Konto-, Bestell- und Gerätesichten, sichere Guard-Prüfung vor/nach asynchronen Requests. Logout löscht private lokale Warenkorbdaten und alte Kontooberflächen; unbestätigter Gerätewiderruf wird nicht als bereits gesperrt behauptet. Neue `tests/account-session-scope.test.cjs` decken verzögertes Ergebnis über Logout/erneute Anmeldung und die Verdrahtung ab. Bestehende öffentliche Seite, rechtliche Angaben, Pages, DNS, Sichtbarkeit und Historie unverändert. **CI auf Implementierungscommit:** [Quality 45665131633](https://github.com/nordkern-fitness/nordkern-website/actions/runs/45665131633) SUCCESS, [Chromium E2E 45665131658](https://github.com/nordkern-fitness/nordkern-website/actions/runs/45665131658) SUCCESS (mocked Supabase), [DEV read-only 45665131664](https://github.com/nordkern-fitness/nordkern-website/actions/runs/45665131664) SUCCESS. Keine neue externe Zahlung, keine Änderung von DEV-Daten durch diese Runde.
+
+App PR #4 vollständig mit dem früheren Sicherungsbranch vereinheitlicht; PR #5 ohne Merge geschlossen, Branch bleibt erhalten. Weiterarbeit: Website-Vertrags-/Shop-/Konto-Gesamtpfade und responsive Abnahme, kontrollierter privater Entwicklungsbetrieb nach separater Freigabe, native und Stripe-Abnahme im privaten App-Repo. Kein Produktionsrelease. App-CI fehlende Runner-Ausführung getrennt dokumentiert; keine manuelle Testpflicht des Inhabers.
+
 ## 9.2 – Privatbetrieb vorbereitet (25.11.2026)
 
 Implementierung `6043b054`: lokaler Vorschau-Server, HTTP-Tests und CI-Archive nur privat/manuell. [Umstellungsplan und Rückkehrstrategie](9.2-private-development-transition.md). Keine Änderung an Sichtbarkeit, DNS, Pages, main oder Historie. Rechtliche und administrative Freigaben ausstehend; CI am tatsächlichen Implementierungscommit separat prüfen.

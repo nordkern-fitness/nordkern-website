@@ -1,5 +1,9 @@
 # NORDKERN FITNESS · MASTER PROGRESS
 
+## 9.3 – Master-Fortsetzung: echte Rechnungsquellen im Mitgliederbereich (25.11.2026)
+
+Ausgang `a08ba5aa`. Implementierungscommit `74af31d33500ffb6853d5e14f01f82bc224fe264`: Rechnungsübersicht auf Basis der neuen scoped Billing-RPCs im bestehenden Kontoportal; getrennte Rechnungs-, Zahlungsbeleg- und Korrekturarten, Zahlungs-/Erstattungsstatus, Pagination und Originaldokument-Validierung. Keine Guthabenbuchungen als Rechnung ausgegeben. Bei fehlenden oder nicht freigegebenen RPCs kein fingierter Datenbestand. Backend-Kandidat nur in App PR #4, Featureflag aus, keine DEV-Migration. Kein Stripe-Kauf oder Backfill; Dokumentlinks können ablaufen, keine vollständige PDF-Archivierung. Website-CI am Implementierungscommit: Quality 45685282479 success; Chromium E2E 45685282655 success (Mock); read-only DEV-Browserintegration 45685282505 success. Beide Drafts unverändert privat im Entwicklungsworkflow bzw. ohne Veröffentlichung; keine Änderung an Main, Pages, Domain, Sichtbarkeit, DEV-Konten oder Rechtstexten. Weitere Funktions-/Datenbank-/Produktionsfreigaben offen; Gesamtauftrag bleibt bestehen.
+
 ## 9.3 – Master-Fortsetzung: Guthabenverlauf und Vertragsdetailparität (25.11.2026)
 
 `586198842ab43ca23917ea17a219d4e8253cfcbd`: Kontoportal liest ausschließlich eigene RLS-geschützte wallet_ledger-Buchungen (Einheiten, Grund, Datum), validiert Identität/Kategorie/Signatur der Menge, 30+1 Cursor-Seiten mit voller Timestamp-Präzision, Mehrladen und Aktualisieren, Login-Lebensdauer und DOM-Mount-Guard schützen verspätete Antworten. Neues wallet-ledger.test.cjs. `094fb2077ed6e73817a395dd08e90e86645d906c`: Vertragsbeginn, bestätigter ursprünglicher Preis und tatsächlich im Snapshot vorhandene Monatskontingente analog App; keine Preisannahmen. Vertrags-/Bestell-/Guthabenbelege sind keine vollständigen Rechnungen.

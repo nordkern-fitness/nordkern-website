@@ -89,3 +89,19 @@
 .nk-account-consent a{font-weight:680;color:#215d38;text-decoration:underline;text-underline-offset:3px}
 .nk-account-consent a:focus-visible{outline:3px solid #8ab99b;outline-offset:3px}
 .nk-account-panel select:disabled{color:#667169;background:#f1f4f1}
+
+/* FDS member workspace: calm hierarchy and readable responsive forms. */
+.nk-account{background:#f4f7f3;color:#17231c}
+.nk-account-hero{text-align:left;max-width:1100px;margin:0 auto 2rem}
+.nk-account-hero h1{max-width:15ch;font-size:clamp(2.65rem,5.2vw,4.6rem)}
+.nk-account-hero>p:last-child{margin:0;max-width:60ch;color:#56665b}
+.nk-account-panel{border-color:#dce6dc;border-radius:20px;box-shadow:none}
+.nk-account-panel h2{color:#17231c}
+.nk-account-panel button:not(.nk-account-subtle){background:#147538}
+.nk-account-panel button:not(.nk-account-subtle):hover:not(:disabled){background:#105c2c}
+.nk-account-panel .nk-account-subtle{background:#eef5ed;color:#105c2c;border:1px solid #d5e3d5}
+.nk-account-panel label{color:#243d2b}
+.nk-account-contract,.nk-account-order{background:#f7faf6;border-color:#dce6dc;border-radius:14px}
+.nk-account-panel [role="alert"]:not(:empty){overflow-wrap:anywhere}
+.nk-account-grid{align-items:start}
+@media(max-width:720px){.nk-account-hero{padding-inline:6px}.nk-account-panel{padding:1.25rem}.nk-account-panel form{max-width:100%}.nk-account-panel .nk-account-actions button{flex:1 1 100%}}

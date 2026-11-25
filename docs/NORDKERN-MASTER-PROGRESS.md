@@ -1,5 +1,9 @@
 # NORDKERN FITNESS · MASTER PROGRESS
 
+## 9.2 – Privatbetrieb vorbereitet (25.11.2026)
+
+Implementierung `6043b054`: lokaler Vorschau-Server, HTTP-Tests und CI-Archive nur privat/manuell. [Umstellungsplan und Rückkehrstrategie](9.2-private-development-transition.md). Keine Änderung an Sichtbarkeit, DNS, Pages, main oder Historie. Rechtliche und administrative Freigaben ausstehend; CI am tatsächlichen Implementierungscommit separat prüfen.
+
 ## 9.1 – Vorgründungs-Privatsphäre, öffentliche GitHub-Quellen und sichere Offline-Vorschau (24.11.2026)
 
 **Tatsächlich implementiert und geprüft:** Website PR #3 auf Entwicklungsbranch, Code-Commit `58e141b7`, Syntaxkorrektur `670567fc`. [Website Quality 45464517934](https://github.com/nordkern-fitness/nordkern-website/actions/runs/45464517934) **SUCCESS** einschließlich neuer Python-Privacy-Tests, nachvollziehbarer sechs rechtlich relevanter Namensnennungen nur in `impressum.html`, automatischer Negativprüfung aller getrackten Textdateien und erneuter Prüfung des **ohne Namensduplikat** generierten Offline-Vorschaupakets. [Chromium-E2E 45464518088](https://github.com/nordkern-fitness/nordkern-website/actions/runs/45464518088) und [READ-ONLY-DEV-Browser 45464518167](https://github.com/nordkern-fitness/nordkern-website/actions/runs/45464518167) **SUCCESS**.

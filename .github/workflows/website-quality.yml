@@ -79,38 +79,3 @@ jobs:
           path: release/Nordkern-Website-Source.zip
           if-no-files-found: error
           retention-days: 14
-
-      # Temporary transport: public PostgreSQL binaries only, no private source.
-      - name: Prepare public PostgreSQL 17 runtime for isolated executor
-        if: github.event_name == 'pull_request'
-        env:
-          PREVIEW_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          [[ "$PREVIEW_HEAD" =~ ^[0-9a-f]{40}$ ]]
-          git fetch --no-tags --depth=1 origin "$PREVIEW_HEAD"
-          if ! git log -1 --format=%B "$PREVIEW_HEAD" | grep -Fxq 'NK-OFFLINE-TRANSFER-20261126-B'; then exit 0; fi
-          mkdir -p "$RUNNER_TEMP/nk-transfer" "$RUNNER_TEMP/nk-public"
-          git checkout --detach "$PREVIEW_HEAD"
-          python3 scripts/build_standalone.py
-          python3 scripts/privacy_audit.py --preview
-          openssl cms -encrypt -aes-256-gcm -binary -outform DER -in preview/Nordkern-Website.html -out "$RUNNER_TEMP/nk-transfer/website.cms" scripts/preview-recipient-20261126-b.pem
-          docker pull postgres:17-trixie
-          docker image inspect postgres:17-trixie --format '{{index .RepoDigests 0}}' > "$RUNNER_TEMP/nk-public/image-digest.txt"
-          docker run --rm --entrypoint sh -v "$RUNNER_TEMP/nk-public:/export" postgres:17-trixie -c 'tar -czf /export/postgres17.tgz -C / usr/lib/postgresql/17 usr/share/postgresql/17; postgres --version'
-          sha256sum "$RUNNER_TEMP/nk-public/postgres17.tgz" > "$RUNNER_TEMP/nk-public/sha256.txt"
-      - name: Upload encrypted website only
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: nordkern-website-encrypted
-          path: ${{ runner.temp }}/nk-transfer/website.cms
-          if-no-files-found: ignore
-          retention-days: 1
-      - name: Upload public unmodified PostgreSQL runtime only
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: nordkern-public-postgres17-runtime
-          path: ${{ runner.temp }}/nk-public/
-          if-no-files-found: ignore
-          retention-days: 1

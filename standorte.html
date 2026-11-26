@@ -211,6 +211,49 @@
       text-wrap: balance;
     }
 
+    .location-catalog-list-v3 {
+      display: grid;
+      gap: .55rem;
+      padding: 0;
+      margin: .8rem 0 1.2rem;
+      list-style: none;
+    }
+
+    .location-catalog-list-v3[hidden],
+    [data-nk-studio-retry][hidden] { display: none; }
+
+    .location-catalog-item-v3 {
+      display: grid;
+      gap: .25rem;
+      padding: .8rem 1rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,.82);
+      overflow-wrap: anywhere;
+    }
+
+    .location-catalog-item-v3 span {
+      font-size: .85rem;
+      color: var(--muted);
+    }
+
+    .location-map-consent-v3 {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: .85rem;
+      min-height: 100%;
+      padding: clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    .location-map-consent-v3 h3,
+    .location-map-consent-v3 p { margin: 0; }
+
+    .location-map-consent-v3 a { text-decoration: underline; }
+
+    .location-map-consent-v3 button:focus-visible,
+    [data-nk-studio-retry]:focus-visible { outline: 3px solid var(--nf-green); outline-offset: 3px; }
+
     .location-facts-v3 {
       display: grid;
       gap: 0.5rem;
@@ -599,6 +642,8 @@
         <article class="location-info-v3">
           <p class="location-status-v3">Standort in Planung</p>
           <p data-nk-studio-data-status role="status" aria-live="polite">Standortkatalog wird geprüft. Eine Eröffnung ist noch nicht bestätigt.</p>
+          <ul class="location-catalog-list-v3" data-nk-studio-list aria-label="Standorte im digitalen Katalog" hidden></ul>
+          <button type="button" class="route-button-v3" data-nk-studio-retry hidden>Standortkatalog erneut laden</button>
 
           <h2 id="location-gvm-title">Grevesmühlen.</h2>
 
@@ -693,13 +738,13 @@
           </p>
         </div>
 
-        <div class="location-map-frame-v3" aria-label="Karte Grevesmühlen">
-          <iframe
-            title="Karte: Grevesmühlen"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps?q=Grevesm%C3%BChlen&output=embed"
-          ></iframe>
+        <div class="location-map-frame-v3" data-nk-map-frame aria-label="Karte Grevesmühlen">
+          <div class="location-map-consent-v3">
+            <h3>Interaktive Karte</h3>
+            <p>Erst wenn du die Karte lädst, wird eine Verbindung zu Google Maps hergestellt.</p>
+            <button type="button" class="route-button-v3 route-button-v3-primary" data-nk-map-load>Karte laden</button>
+            <a href="https://www.google.com/maps/search/?api=1&amp;query=Grevesm%C3%BChlen" target="_blank" rel="noopener noreferrer">Karte extern öffnen</a>
+          </div>
         </div>
       </div>
     </section>

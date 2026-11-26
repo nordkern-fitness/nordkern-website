@@ -198,3 +198,9 @@ Implementierung `6043b054`: lokaler Vorschau-Server, HTTP-Tests und CI-Archive n
 - Tatsächliche Produktänderung: spezifische, erlaubnislistenbasierte Fehlermeldungen für bereits laufende Buchung, Zahlungsprüfung, bestätigten unbezahlten Ablauf, Zustandskonflikt, unbekannten Zahlungsstatus und vorhandenen Vertrag. Keine ungeprüften Erfolgsmeldungen oder Anzeige interner Serverdetails.
 - 2 neue lokale Node-Prüfgruppen bestanden; einschließlich bisheriger Bestellhistorie 6/6 in dieser lokalen Testauswahl, Syntaxprüfung bestanden. Vollständige Browser-/Provider-E2E-Abnahme nach Integration der neuen Backend-Kandidaten bleibt offen.
 - App- und Website-Checkout verwenden dieselben vorgesehenen Serverzustände. Neue serverseitige Reservierung wird erst nach regulärer Supabase-Abnahme verfügbar. Kein Deployment, keine Zahlungen.
+
+## 9.4 – Öffentliche Standortseite (26.11.2026)
+- Tatsächliche Produktänderungen in standorte.html und js/studios.js: Darstellung aller bis zu 50 bestätigten öffentlichen Katalogeinträge, eindeutige Slugs, stabile Reihenfolge, Ablehnung unvollständiger/fehlerhafter Antworten, textbasierte sichere Darstellung, Wiederholungsfunktion und kein falscher Eröffnungsstatus.
+- Google-Karte wird erst auf ausdrückliche Betätigung des Ladebuttons eingebettet; alternatives externes Kartenangebot bleibt verfügbar. Kein automatisch eingebetteter Google-iframe, kein Referrer beim Embed. Responsive FDS-Elemente und sichtbarer Tastaturfokus.
+- 6 JavaScript-Testfälle mit simuliertem DOM lokal bestanden, Syntaxprüfung bestanden, siebte HTML-Strukturprüfung auf dem tatsächlichen bearbeiteten Quelltext erfolgreich. Kein vollständiger Browser-/Live-API-Test dieser Änderung. Die lokale Testdatei enthält alle sieben Fälle für CI.
+- Keine Öffnungsmeldungen, keine Live- oder DEV-Datenänderung, kein Deployment, keine Vorschau.

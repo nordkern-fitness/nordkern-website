@@ -58,10 +58,10 @@ function seed(){
   },
   orders:[
    {id:ORDER_A,user_id:USER,public_number:'NK-TEST-001',status:'pending_payment',
-    currency:'eur',total_cents:440,refunded_cents:0,
+    currency:'eur',subtotal_cents:440,total_cents:440,refunded_cents:0,
     created_at:'2026-11-20T09:00:00Z',paid_at:null},
    {id:ORDER_B,user_id:USER,public_number:'NK-TEST-002',status:'paid',
-    currency:'eur',total_cents:440,refunded_cents:0,
+    currency:'eur',subtotal_cents:440,total_cents:440,refunded_cents:0,
     created_at:'2026-11-19T09:00:00Z',paid_at:'2026-11-19T09:03:00Z'},
   ],
   items:[

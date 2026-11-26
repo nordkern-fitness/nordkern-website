@@ -811,6 +811,46 @@
       area.appendChild(row);
     }
   }
+  async function loadOrderHistory(read,userId,assertCurrent=()=>{}) {
+    if(!UUID.test(userId))throw new Error('Ungültiges Mitgliedskonto.');
+    const orders=await read('/rest/v1/orders?select=id,user_id,public_number,status,currency,subtotal_cents,total_cents,created_at,paid_at,refunded_cents&user_id=eq.'+
+      userId+'&order=created_at.desc,id.desc&limit=30');
+    assertCurrent();
+    if(!Array.isArray(orders)||orders.length>30||orders.some(order=>
+      !UUID.test(order?.id)||order.user_id!==userId||order.currency!=='eur'||
+      !Number.isSafeInteger(order.total_cents)||order.total_cents<0||
+      !Number.isSafeInteger(order.subtotal_cents)||order.subtotal_cents<0||order.subtotal_cents>order.total_cents||
+      !Number.isSafeInteger(order.refunded_cents)||order.refunded_cents<0||order.refunded_cents>order.total_cents||
+      typeof order.public_number!=='string'||order.public_number.length>100||
+      typeof order.created_at!=='string'||!Number.isFinite(Date.parse(order.created_at))||
+      (order.paid_at!==null&&(typeof order.paid_at!=='string'||!Number.isFinite(Date.parse(order.paid_at))))||
+      !['pending_payment','paid','partially_refunded','failed','cancelled','refunded'].includes(order.status))||
+      new Set(orders.map(order=>order.id)).size!==orders.length)
+      throw new Error('Bestellhistorie konnte nicht sicher überprüft werden.');
+    const items=[];
+    for(let offset=0;offset<orders.length;offset+=10){
+      const batch=orders.slice(offset,offset+10),ids=new Set(batch.map(order=>order.id));
+      const lines=await read('/rest/v1/order_items?select=id,order_id,title,quantity,unit_price_cents&order_id=in.('+
+        Array.from(ids).join(',')+')&order=id.asc&limit=81');
+      assertCurrent();
+      if(!Array.isArray(lines)||lines.length>batch.length*8||lines.some(item=>
+        !UUID.test(item?.id)||!ids.has(item.order_id)||typeof item.title!=='string'||item.title.length>=500||
+        !Number.isSafeInteger(item.quantity)||item.quantity<1||item.quantity>99||
+        !Number.isSafeInteger(item.unit_price_cents)||item.unit_price_cents<0)||
+        new Set(lines.map(item=>item.id)).size!==lines.length)
+        throw new Error('Bestellpositionen konnten nicht sicher überprüft werden.');
+      for(const order of batch){
+        const own=lines.filter(item=>item.order_id===order.id);
+        const subtotal=own.reduce((sum,item)=>sum+item.quantity*item.unit_price_cents,0);
+        if(!own.length||own.length>8||!Number.isSafeInteger(subtotal)||subtotal!==order.subtotal_cents)
+          throw new Error('Bestellpositionen sind unvollständig oder widersprüchlich.');
+      }
+      items.push(...lines);
+    }
+    if(new Set(items.map(item=>item.id)).size!==items.length)
+      throw new Error('Bestellpositionen konnten nicht sicher überprüft werden.');
+    return {orders,items};
+  }
   async function loadShopAccount(canCheckout,userId,scope=sessionScope.capture()) {
     sessionScope.assertCurrent(scope);
     const display=byId('nk-web-shop-cart');
@@ -825,29 +865,12 @@
     try {
       if (!window.NordkernShop || !window.NordkernShopCart)
         throw new Error('Warenkorb-Dienst fehlt.');
-      const [catalogue,orders]=await Promise.all([
+      const [catalogue,historyResult]=await Promise.all([
         window.NordkernShop.loadCatalogue(),
-        authorized('/rest/v1/orders?select=id,user_id,public_number,status,currency,total_cents,created_at,paid_at,refunded_cents&user_id=eq.'+
-          userId+'&order=created_at.desc&limit=30',{},scope)
+        loadOrderHistory(path=>authorized(path,{},scope),userId,()=>sessionScope.assertCurrent(scope))
       ]);
       sessionScope.assertCurrent(scope);
-      if(!Array.isArray(orders)||orders.length>30||orders.some(order=>
-        !UUID.test(order?.id)||order.user_id!==userId||order.currency!=='eur'||
-        typeof order.total_cents!=='number'||!Number.isSafeInteger(order.total_cents)||
-        order.total_cents<0||
-        !['pending_payment','paid','partially_refunded','failed','cancelled','refunded'].includes(order.status)))
-        throw new Error('Bestellhistorie konnte nicht sicher überprüft werden.');
-      const ids=orders.map(order=>order.id);
-      const items=ids.length ? await authorized(
-        '/rest/v1/order_items?select=id,order_id,title,quantity,unit_price_cents&order_id=in.('+
-        ids.join(',')+')&limit=200',{},scope) : [];
-      sessionScope.assertCurrent(scope);
-      if(!Array.isArray(items)||items.length>200||
-        items.some(item=>!UUID.test(item?.id)||!ids.includes(item.order_id)||
-          typeof item.title!=='string'||!Number.isSafeInteger(item.quantity)||
-          item.quantity<1||!Number.isSafeInteger(item.unit_price_cents)||
-          item.unit_price_cents<0))
-        throw new Error('Bestellpositionen konnten nicht sicher überprüft werden.');
+      const {orders,items}=historyResult;
 
       orderSnapshot={orders,items};
       renderOrders();
@@ -1180,6 +1203,6 @@
   }
   window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,
     paidMembership,contractStatusLabel,detailsForContract,orderStatusName,
-    memberSectionFromHash,validateSignupInput,createSessionScope,validLedgerEntry,walletLedgerPath,walletLedgerPage,billingRecord,safeBillingDocument,billingLabel,mount};
+    memberSectionFromHash,validateSignupInput,createSessionScope,validLedgerEntry,walletLedgerPath,walletLedgerPage,billingRecord,safeBillingDocument,billingLabel,loadOrderHistory,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

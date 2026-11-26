@@ -26,10 +26,10 @@ COMPONENTS = {
 def inline_components(html):
     for slot, file in COMPONENTS.items():
         source = (ROOT / file).read_text(encoding="utf-8")
-        pattern = re.compile(r"<div\s+data-" + re.escape(slot) + r"\s*>\s*</div>")
+        pattern = re.compile(r"<div\b(?P<attrs>[^>]*\sdata-" + re.escape(slot) + r"(?=\s|>)[^>]*)>\s*</div>")
         html = pattern.sub(
             lambda match: (
-                '<div data-' + slot + ' data-preview-inlined="true">\n' +
+                '<div' + match.group("attrs") + ' data-preview-inlined="true">\n' +
                 source + '\n</div>'
             ),
             html,
@@ -45,7 +45,7 @@ PREVIEW_LEGAL_NOTICE = """<!doctype html>
 <meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nordkern Fitness – Rechtliche Angaben (Vorschau)</title></head>
-<body style="font:16px/1.6 system-ui;max-width:700px;margin:8vh auto;padding:24px">
+<body style="font:16px/1.6 system-ui;box-sizing:border-box;max-width:700px;margin:8vh auto;padding:24px;overflow-wrap:anywhere">
 <h1>Nur Entwicklungsvorschau – keine rechtliche Anbieterkennzeichnung</h1>
 <p>Dieses lokal erzeugte, nicht freigegebene Vorschaupaket ist kein öffentlicher Studio- oder Vertragsauftritt.</p>
 <p>Die rechtlichen Angaben dieser Kopie werden aus Datenschutzgründen nicht dupliziert.

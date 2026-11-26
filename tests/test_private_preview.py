@@ -7,6 +7,22 @@ from http.client import HTTPConnection
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from private_preview import make_server
+from build_preview import inline_components
+
+class InlinedComponentsTest(unittest.TestCase):
+    def test_class_bearing_home_slots_are_preserved_and_inlined(self):
+        for slot in ("home-section-studio", "home-section-tagespass", "home-section-urlaubspass", "home-section-app"):
+            source = '<div class="home-slot" data-' + slot + '></div>'
+            result = inline_components(source)
+            self.assertIn('class="home-slot"', result)
+            self.assertIn('data-preview-inlined="true"', result)
+            self.assertIn('<article', result)
+            self.assertNotEqual(source, result)
+
+    def test_boolean_slot_with_following_attribute(self):
+        result = inline_components('<div data-header class="example"></div>')
+        self.assertIn('data-header class="example" data-preview-inlined="true"', result)
+        self.assertIn('<header', result)
 
 class PrivatePreviewTest(unittest.TestCase):
     def setUp(self):

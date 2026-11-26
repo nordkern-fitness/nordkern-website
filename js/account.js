@@ -119,6 +119,17 @@
       else sessionStorage.removeItem(KEY);
     } catch { /* Store in memory when sessionStorage is disabled. */ }
   }
+  function checkoutErrorMessage(code) {
+    const messages = {
+      checkout_in_progress: 'Eine Buchung läuft bereits. Verwende den ursprünglichen Checkout und starte keine weitere Zahlung.',
+      checkout_payment_review_required: 'Eine Zahlung wird geprüft. Bitte starte keine weitere Zahlung und kontaktiere Nordkern.',
+      checkout_expired_retry: 'Die unbezahlte Buchung ist abgelaufen. Du kannst jetzt einen neuen Checkout starten.',
+      checkout_state_conflict: 'Der Buchungsstatus hat sich geändert. Aktualisiere deine Vertragsdaten, bevor du erneut buchst.',
+      checkout_reservation_pending: 'Der Zahlungsstatus ist noch nicht bestätigt. Bitte starte keine weitere Zahlung.',
+      active_membership_exists: 'Für dein Konto besteht bereits ein laufender oder vorgemerkter Vertrag.',
+    };
+    return typeof code==='string' && Object.hasOwn(messages,code) ? messages[code] : null;
+  }
   async function request(path, { method = 'GET', body, token, headers = {}, scope = sessionScope.capture() } = {}) {
     const { url, publishableKey } = base();
     if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Ungültiger Dienstpfad.');
@@ -148,6 +159,11 @@
           throw new Error('Deine Sitzung ist nicht mehr gültig oder der Zugriff wurde verweigert. Bitte erneut anmelden.');
         }
         if (response.status === 400) throw new Error('Der Anmeldedienst hat die Anfrage abgelehnt. Bitte die Angaben prüfen.');
+        if (path === '/functions/v1/create-offer-checkout' && [409,503].includes(response.status)) {
+          const errorBody = await response.json().catch(() => null);
+          const message = checkoutErrorMessage(errorBody?.error);
+          if (message) throw new Error(message);
+        }
         if (response.status === 409) throw new Error('Studio- oder Vertragsänderung ist momentan gesperrt.');
         if (response.status === 503) throw new Error('Nordkern-Dienst derzeit nicht verfügbar. Vorgang nicht bestätigt.');
         throw new Error('Nordkern-Dienst momentan nicht erreichbar (' + response.status + ').');
@@ -1203,6 +1219,6 @@
   }
   window.NordkernAccount = {validSession,safeCheckoutUrl,safeBillingPortalUrl,
     paidMembership,contractStatusLabel,detailsForContract,orderStatusName,
-    memberSectionFromHash,validateSignupInput,createSessionScope,validLedgerEntry,walletLedgerPath,walletLedgerPage,billingRecord,safeBillingDocument,billingLabel,loadOrderHistory,mount};
+    memberSectionFromHash,validateSignupInput,createSessionScope,validLedgerEntry,walletLedgerPath,walletLedgerPage,billingRecord,safeBillingDocument,billingLabel,loadOrderHistory,checkoutErrorMessage,mount};
   document.addEventListener('DOMContentLoaded',()=>{void mount();});
 })();

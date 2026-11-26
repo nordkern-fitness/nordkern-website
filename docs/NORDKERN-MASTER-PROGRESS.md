@@ -193,3 +193,8 @@ Implementierung `6043b054`: lokaler Vorschau-Server, HTTP-Tests und CI-Archive n
 - Produktänderung im Mitgliederportal: Bestellpositionen für 30 Bestellungen vollständig in 10er-Gruppen; deterministische Sortierung, UUID-/Kontoinhaberschaft, eindeutige IDs, Zwischensummenabgleich und Sitzungswechsel geprüft. Unvollständige Historie wird nicht als bestätigt dargestellt.
 - Lokaler Node-Regressionstest: 4/4 erfolgreich, einschließlich 240 Bestellpositionen, fremde/fehlende/doppelte Daten und Sitzungswechsel; JavaScript-Syntaxprüfung bestanden. Browser-Fixtures an die tatsächliche Backend-Spalte subtotal_cents angepasst. Kein vollständiger Browser-CI-Nachweis dieser Änderung.
 - Prioritätsänderung: ausschließlich Produktdateien und relevante Tests; keine Vorschau-Arbeit, kein Deployment oder Merge.
+
+## 9.4 – Zahlungsstatus im Mitgliederportal
+- Tatsächliche Produktänderung: spezifische, erlaubnislistenbasierte Fehlermeldungen für bereits laufende Buchung, Zahlungsprüfung, bestätigten unbezahlten Ablauf, Zustandskonflikt, unbekannten Zahlungsstatus und vorhandenen Vertrag. Keine ungeprüften Erfolgsmeldungen oder Anzeige interner Serverdetails.
+- 2 neue lokale Node-Prüfgruppen bestanden; einschließlich bisheriger Bestellhistorie 6/6 in dieser lokalen Testauswahl, Syntaxprüfung bestanden. Vollständige Browser-/Provider-E2E-Abnahme nach Integration der neuen Backend-Kandidaten bleibt offen.
+- App- und Website-Checkout verwenden dieselben vorgesehenen Serverzustände. Neue serverseitige Reservierung wird erst nach regulärer Supabase-Abnahme verfügbar. Kein Deployment, keine Zahlungen.

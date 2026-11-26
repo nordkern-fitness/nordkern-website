@@ -35,7 +35,7 @@ test('site refuses corrupt, duplicate and truncated catalogues', async () => {
 });
 test('all returned studio names are rendered as text and not claimed open',async()=>{
   const f=load(async()=>({ok:true,json:async()=>[...rows,{slug:'other',name:'<b>Fixture</b>',active:true}]}));await f.api.mount();
-  assert.equal(f.list.children.length,2);assert.equal(f.list.children[1].children[0].textContent,'<b>Fixture</b>');assert.match(f.list.children[1].children[1].textContent,/Eröffnung nicht bestätigt/);assert.equal(f.list.hidden,false);assert.equal(f.retry.hidden,true);
+  assert.equal(f.list.children.length,2);assert.equal(f.list.children[1].children[0].textContent,'<b>Fixture</b>');assert.match(f.list.children[1].children[1].textContent,/kein Betriebsnachweis/);assert.equal(f.list.hidden,false);assert.equal(f.retry.hidden,true);
 });
 test('failed load clears stale data, allows retry, and successful retry clears error',async()=>{
   let calls=0;const f=load(async()=>{calls++;if(calls===2)throw Error('offline');return {ok:true,json:async()=>rows};});await f.api.mount();await f.api.mount();assert.equal(f.list.children.length,0);assert.equal(f.retry.hidden,false);assert.equal(f.retry.disabled,false);await f.api.mount();assert.equal(f.list.children.length,1);assert.equal(f.retry.hidden,true);

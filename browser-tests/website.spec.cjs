@@ -266,3 +266,27 @@ test('new account overview preserves unknown balances and never interprets marku
  await expect(page.locator('.nk-overview-plan h4')).toHaveText('<img src=x onerror=alert(1)>');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
 });
+
+test('public studio publication distinguishes plan, confirmed operation and unavailable data',async({page})=>{
+ const state=fixtureState(page);
+ const row={slug:'grevesmuehlen',name:'Fixture <b>Studio</b>',timezone:'Europe/Berlin',address:{street:'Fixtureweg',house_number:'1',postal_code:'00000',city:'Fixtureort',country:'DE'},hours:[{weekday:1,opens_minute:480,closes_minute:720},{weekday:1,opens_minute:780,closes_minute:1320}],exceptions:[{day:'2026-12-01',closed:true,opens_minute:null,closes_minute:null}],mode:'operating',published_at:'2026-11-26T10:00:00Z'};
+ state.publicStudios=[row];
+ await page.goto('/standorte.html');
+ const list=page.locator('[data-nk-published-list]');
+ await expect(list).toBeVisible();
+ await expect(list).toContainText('Fixture <b>Studio</b>');
+ await expect(list.locator('h3 b')).toHaveCount(0);
+ await expect(list).toContainText('08:00–12:00 · 13:00–22:00');
+ await expect(page.locator('[data-nk-gvm-state]').first()).toHaveText('Betrieb bestätigt');
+ await list.locator('summary').click();
+ await expect(list.locator('details ul')).toContainText('01.12.2026 · Geschlossen');
+ state.publicStudioFailure=true;
+ await page.reload();
+ await expect(page.locator('[data-nk-published-retry]')).toBeVisible();
+ await expect(list).toBeHidden();
+ await expect(page.locator('[data-nk-gvm-state]').first()).toHaveText('Betriebsstatus nicht bestätigt');
+ state.publicStudioFailure=false;state.publicStudios=[{...row,mode:'planned'}];
+ await page.locator('[data-nk-published-retry]').click();
+ await expect(list).toContainText('Geplante regelmäßige Öffnungszeiten');
+ await expect(page.locator('[data-nk-gvm-state]').first()).toHaveText('Standort in Planung');
+});

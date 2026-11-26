@@ -84,7 +84,7 @@
     }
 
     .location-image-v3::before {
-      content: "Studio-Bild lädt nicht – Dateiname prüfen";
+      content: "Studioansicht derzeit nicht verfügbar";
       position: absolute;
       left: clamp(1rem, 2vw, 1.5rem);
       top: clamp(1rem, 2vw, 1.5rem);
@@ -253,6 +253,75 @@
 
     .location-map-consent-v3 button:focus-visible,
     [data-nk-studio-retry]:focus-visible { outline: 3px solid var(--nf-green); outline-offset: 3px; }
+
+    .location-public-section-v3 {
+      padding: 0 .75rem .75rem;
+      background: #ffffff;
+    }
+
+    .location-public-panel-v3 {
+      padding: clamp(1.25rem, 4vw, 3rem);
+      background: #f5f5f7;
+    }
+
+    .location-public-panel-v3 h2 {
+      margin: .4rem 0 1rem;
+      color: var(--text);
+      font-size: clamp(2.2rem, 5vw, 4.6rem);
+      letter-spacing: -.06em;
+      line-height: 1;
+      text-wrap: balance;
+    }
+
+    .location-public-panel-v3 > p:not(.eyebrow) {
+      max-width: 70ch;
+      color: var(--text-soft);
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .location-public-list-v3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+      gap: .85rem;
+      margin-top: 1.5rem;
+    }
+
+    .location-public-list-v3[hidden],
+    [data-nk-published-retry][hidden] { display: none; }
+
+    .location-public-card-v3 {
+      min-width: 0;
+      display: grid;
+      gap: .75rem;
+      align-content: start;
+      padding: clamp(1rem, 2.5vw, 2rem);
+      background: #ffffff;
+      border: 1px solid rgba(29,29,31,.08);
+      border-radius: 20px;
+      overflow-wrap: anywhere;
+    }
+
+    .location-public-card-v3 h3 { margin: 0; color: var(--text); font-size: clamp(1.6rem, 2.5vw, 2.3rem); line-height: 1.12; }
+    .location-public-card-v3 h4 { margin: .5rem 0 0; color: var(--text); font-size: 1.08rem; }
+    .location-public-card-v3 address { font-style: normal; color: var(--text); line-height: 1.5; }
+    .location-public-card-v3 p { margin: 0; line-height: 1.5; }
+    .location-public-state-v3 { color: var(--nf-green-dark); font-size: .78rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .location-public-note-v3 { color: var(--muted); font-size: .9rem; }
+    .location-public-hours-v3 { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 0; margin: 0; }
+    .location-public-hours-v3 dt,
+    .location-public-hours-v3 dd { margin: 0; padding: .6rem .25rem; border-bottom: 1px solid rgba(29,29,31,.09); }
+    .location-public-hours-v3 dt { font-weight: 700; }
+    .location-public-hours-v3 dd { color: var(--text-soft); font-variant-numeric: tabular-nums; }
+    .location-public-card-v3 details { padding: .8rem 0; }
+    .location-public-card-v3 summary { cursor: pointer; font-weight: 700; line-height: 1.5; }
+    .location-public-exceptions-v3 { padding-left: 1.2rem; margin: .7rem 0 0; line-height: 1.6; }
+    .location-public-card-v3 summary:focus-visible,
+    [data-nk-published-retry]:focus-visible { outline: 3px solid var(--nf-green); outline-offset: 3px; }
+    [data-nk-published-retry] { margin-top: .75rem; }
+    @media (max-width: 720px) {
+      .location-public-section-v3 { padding: 0 .5rem .5rem; }
+    }
 
     .location-facts-v3 {
       display: grid;
@@ -626,8 +695,8 @@
         <h1 id="locations-page-title">Nordkern Fitness im Norden.</h1>
 
         <p>
-          Der erste Nordkern-Fitness-Standort ist in Grevesmühlen geplant.
-          Der genaue Betriebsstart und die Verfügbarkeit von Zutritt und Buchungen stehen noch nicht fest.
+          Grevesmühlen ist als erster Nordkern-Fitness-Standort vorgesehen.
+          Freigegebene Betriebsinformationen, Adressen und Öffnungszeiten findest du unten. Zutritt und Buchungen werden separat freigegeben.
         </p>
       </div>
     </section>
@@ -640,8 +709,8 @@
         </article>
 
         <article class="location-info-v3">
-          <p class="location-status-v3">Standort in Planung</p>
-          <p data-nk-studio-data-status role="status" aria-live="polite">Standortkatalog wird geprüft. Eine Eröffnung ist noch nicht bestätigt.</p>
+          <p class="location-status-v3" data-nk-gvm-state>Standort in Planung</p>
+          <p data-nk-studio-data-status role="status" aria-live="polite">Standortkatalog wird geprüft. Der Katalogstatus allein bestätigt keine Eröffnung.</p>
           <ul class="location-catalog-list-v3" data-nk-studio-list aria-label="Standorte im digitalen Katalog" hidden></ul>
           <button type="button" class="route-button-v3" data-nk-studio-retry hidden>Standortkatalog erneut laden</button>
 
@@ -656,7 +725,7 @@
           <div class="location-facts-v3" aria-label="Standortdetails">
             <div class="location-fact-v3">
               <span>Status</span>
-              <strong>Standort in Planung</strong>
+              <strong data-nk-gvm-state>Standort in Planung</strong>
             </div>
 
             <div class="location-fact-v3">
@@ -699,6 +768,18 @@
             </a>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section class="location-public-section-v3" aria-labelledby="location-public-title">
+      <div class="location-public-panel-v3">
+        <p class="eyebrow">Standortinformationen</p>
+        <h2 id="location-public-title">Adresse und Öffnungszeiten.</h2>
+        <p>Hier erscheinen ausschließlich ausdrücklich freigegebene Standortdaten. Geplante und bestätigte Betriebsinformationen werden getrennt gekennzeichnet.</p>
+        <p data-nk-published-status role="status" aria-live="polite">Veröffentlichte Standortinformationen werden geprüft …</p>
+        <div class="location-public-list-v3" data-nk-published-list hidden></div>
+        <button type="button" class="route-button-v3" data-nk-published-retry hidden>Standortinformationen erneut laden</button>
+        <noscript><p>Für den aktuellen Veröffentlichungsstand ist JavaScript erforderlich. Bei Fragen kannst du uns über die Kontaktseite erreichen.</p></noscript>
       </div>
     </section>
 

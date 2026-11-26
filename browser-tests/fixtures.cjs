@@ -43,6 +43,8 @@ function seed(){
  return {
   user:USER,
   studio:{...studio},
+  publicStudios:[],
+  publicStudioFailure:false,
   category:{...category},
   product:{...product},
   plans:[{...plan}],
@@ -147,6 +149,9 @@ async function installFixtures(page, state=seed()){
   }else if(pathname==='/rest/v1/shop_products'){
    if(state.shopFailure){await respond({message:'shop offline'},503);return;}
    value=state.emptyCatalogue?[]:[state.product];
+  }else if(pathname==='/rest/v1/rpc/studio_public_directory'&&method==='GET'){
+   if(state.publicStudioFailure){await respond({message:'public directory unavailable'},503);return;}
+   value=state.publicStudios;
   }else if(pathname==='/rest/v1/studios'){
    value=[state.studio];
   }else if(pathname==='/rest/v1/profiles'){

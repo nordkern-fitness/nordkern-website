@@ -204,3 +204,9 @@ Implementierung `6043b054`: lokaler Vorschau-Server, HTTP-Tests und CI-Archive n
 - Google-Karte wird erst auf ausdrückliche Betätigung des Ladebuttons eingebettet; alternatives externes Kartenangebot bleibt verfügbar. Kein automatisch eingebetteter Google-iframe, kein Referrer beim Embed. Responsive FDS-Elemente und sichtbarer Tastaturfokus.
 - 6 JavaScript-Testfälle mit simuliertem DOM lokal bestanden, Syntaxprüfung bestanden, siebte HTML-Strukturprüfung auf dem tatsächlichen bearbeiteten Quelltext erfolgreich. Kein vollständiger Browser-/Live-API-Test dieser Änderung. Die lokale Testdatei enthält alle sieben Fälle für CI.
 - Keine Öffnungsmeldungen, keine Live- oder DEV-Datenänderung, kein Deployment, keine Vorschau.
+
+## 9.4 – Freigegebene Standortinformationen
+- Tatsächliche öffentliche Standortseite: neuer Bereich für ausdrücklich freigegebene Adresse, Zeitzone, regelmäßige Öffnungszeiten und Sonderöffnungen/Schließungen. Planung und bestätigter Betrieb werden getrennt angezeigt. Katalogaktivierung bleibt kein Betriebsnachweis.
+- Neue Read-RPC-Anbindung an den App-Backend-Kandidaten 9.4-studio-publication, strikte Antwortvalidierung, sichere Textausgabe, Retry und Entfernen veralteter Daten bei Fehlern. Responsive FDS-Elemente, semantische Öffnungszeitliste und ausklappbare Ausnahmen. Karten-Opt-in bleibt unverändert.
+- 6/6 neue lokale Node-Tests und JS-Syntaxprüfung bestanden. Lokaler Chromium-Test des neuen Abschnitts/CSS und exakt desselben JS mit abgefangenen Testantworten bei 360 und 1280 Pixeln bestanden (kein Überlauf, sichere Textausgabe, Zeitfenster, Ausnahme, Fehler/Retry). Vollständiger Browserablauf im bestehenden Testbestand ergänzt; vollständige Seiten-/CI-Abnahme nicht ausgeführt.
+- Keine realen Standortdaten freigegeben, keine DEV-Änderung oder Veröffentlichung. Der RPC wird erst nach regulärer Backend-Abnahme verfügbar; bis dahin bleibt die Anzeige ohne bestätigte Daten.

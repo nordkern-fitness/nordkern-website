@@ -84,12 +84,18 @@ jobs:
       # The recipient certificate is public; its private key never enters GitHub.
       - name: Encrypt sanitized preview for isolated transfer
         if: github.event_name == 'pull_request'
+        env:
+          PREVIEW_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          if ! git log -1 --format=%B "${{ github.event.pull_request.head.sha }}" | grep -Fxq 'NK-PRIVATE-PREVIEW-TRANSFER-20261126'; then exit 0; fi
+          [[ "$PREVIEW_HEAD" =~ ^[0-9a-f]{40}$ ]]
+          git fetch --no-tags --depth=1 origin "$PREVIEW_HEAD"
+          if ! git log -1 --format=%B "$PREVIEW_HEAD" | grep -Fxq 'NK-PRIVATE-PREVIEW-TRANSFER-20261126'; then exit 0; fi
+          git checkout --detach "$PREVIEW_HEAD"
+          python3 scripts/build_preview.py
           mkdir -p "$RUNNER_TEMP/nk-transfer"
           cp browser-tests/fixtures.cjs preview/preview-fixtures.cjs
           git rev-parse HEAD > preview/preview-source.txt
-          git rev-parse "${{ github.event.pull_request.head.sha }}" > preview/preview-draft.txt
+          git rev-parse "$PREVIEW_HEAD" > preview/preview-draft.txt
           python3 scripts/privacy_audit.py --preview
           (cd preview && zip -qr "$RUNNER_TEMP/nk-transfer/source.zip" .)
           openssl cms -encrypt -aes-256-gcm -binary -outform DER -in "$RUNNER_TEMP/nk-transfer/source.zip" -out "$RUNNER_TEMP/nk-transfer/nordkern-preview.cms" scripts/preview-recipient-20261126.pem

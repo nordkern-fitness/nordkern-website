@@ -7,9 +7,9 @@
 .shop-catalog-heading-v3 h2{font-size:clamp(2rem,4vw,3.5rem);font-weight:760;letter-spacing:-.055em;line-height:1.1;margin:.4rem 0}
 .shop-catalog-heading-v3>p{color:#6e7272;line-height:1.6;max-width:360px}
 .shop-status-v3{color:#526f58;font-size:.98rem;min-height:1.4rem;margin:1rem 0}
-.shop-grid-v3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.shop-grid-v3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:1rem}
 .shop-card-v3,.shop-empty-v3{border:1px solid #e5e9e5;background:#fff;border-radius:26px;padding:2.1rem;min-height:200px}
-.shop-card-v3{display:grid;align-content:start;gap:.9rem;min-height:310px}
+.shop-card-v3{min-width:0;overflow-wrap:anywhere;display:grid;align-content:start;gap:.9rem;min-height:310px}
 .shop-card-v3 .shop-card-category-v3{font-size:.75rem;font-weight:740;letter-spacing:.07em;text-transform:uppercase;color:#28683f}
 .shop-card-v3 h3{font-size:clamp(1.6rem,2.6vw,2.15rem);font-weight:760;letter-spacing:-.055em;line-height:1.15}
 .shop-card-v3 p,.shop-empty-v3 p{color:#606a62;line-height:1.65;margin:0}

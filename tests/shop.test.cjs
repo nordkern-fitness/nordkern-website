@@ -32,7 +32,7 @@ test('only explicitly published and well-formed categories and products render',
 test('category permission scope removes products from unpublished categories',()=>{
  const api=load();
  const data=api.parseCatalogue([category],[product,
-   {...product,category_id:'33333333-3333-4333-8333-333333333333'}]);
+   {...product,id:'44444444-4444-4444-8444-444444444444',slug:'hidden-product',category_id:'33333333-3333-4333-8333-333333333333'}]);
  assert.equal(data.products.length,1);
  assert.equal(data.products[0].price_cents,1490);
 });

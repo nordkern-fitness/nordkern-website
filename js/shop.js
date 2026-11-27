@@ -19,8 +19,7 @@
       typeof value.category_id==="string" && UUID.test(value.category_id) &&
       typeof value.slug==="string" && SLUG.test(value.slug) &&
       text(value.title,180) && typeof value.subtitle==="string" && value.subtitle.length<=400 &&
-      text(value.description,5000) && typeof value.fulfillment==="string" &&
-      value.fulfillment.length<32 && cents(value.price_cents) &&
+      text(value.description,5000) && ["shipping","digital_credit"].includes(value.fulfillment) && cents(value.price_cents) &&
       (value.compare_at_price_cents===null||cents(value.compare_at_price_cents)) &&
       (value.stock_quantity===null||(Number.isSafeInteger(value.stock_quantity)&&value.stock_quantity>=0)) &&
       sort(value.sort_order) && value.published===true;
@@ -30,8 +29,12 @@
         !Array.isArray(products)||products.length>100||!products.every(validProduct)) {
       throw new Error("Ungültige Shop-Katalogdaten.");
     }
+    const unique=rows=>new Set(rows.map(x=>x.id.toLowerCase())).size===rows.length&&
+      new Set(rows.map(x=>x.slug)).size===rows.length;
+    if(!unique(categories)||!unique(products))throw new Error("Mehrdeutige Shop-Katalogdaten.");
+    const order=(a,b)=>a.sort_order-b.sort_order||a.id.localeCompare(b.id);
     const published=new Set(categories.map(x=>x.id));
-    return {categories,products:products.filter(x=>published.has(x.category_id))};
+    return {categories:[...categories].sort(order),products:products.filter(x=>published.has(x.category_id)).sort(order)};
   }
   async function loadCatalogue() {
     const cfg=window.NordkernCatalog?.publicConfig;
@@ -47,8 +50,8 @@
     const ctl=new AbortController(),timer=window.setTimeout(()=>ctl.abort(),9000);
     try {
       const paths=[
-        "/rest/v1/shop_categories?select=id,slug,title,sort_order,published&published=eq.true&order=sort_order.asc&limit=100",
-        "/rest/v1/shop_products?select=id,category_id,slug,title,subtitle,description,fulfillment,price_cents,compare_at_price_cents,stock_quantity,sort_order,published&published=eq.true&order=sort_order.asc&limit=100"
+        "/rest/v1/shop_categories?select=id,slug,title,sort_order,published&published=eq.true&order=sort_order.asc,id.asc&limit=101",
+        "/rest/v1/shop_products?select=id,category_id,slug,title,subtitle,description,fulfillment,price_cents,compare_at_price_cents,stock_quantity,sort_order,published&published=eq.true&order=sort_order.asc,id.asc&limit=101"
       ];
       const [categories,products]=await Promise.all(paths.map(async path=>{
         const response=await fetch(cfg.url+path,{
@@ -86,7 +89,12 @@
       }
     });
     const cartApi=window.NordkernShopCart;
-    let selected="all",catalogue=null;
+    let selected="all",catalogue=null,pending=false;
+    const suspendCart=message=>{
+      if(cartLink){cartLink.setAttribute("aria-disabled","true");cartLink.tabIndex=-1;}
+      if(cartHint)cartHint.textContent=message;
+      if(cartArea){cartArea.replaceChildren();cartArea.appendChild(element("p","",message));}
+    };
     const renderCart=()=>{
       if(!cartArea||!catalogue)return;
       cartArea.replaceChildren();
@@ -122,9 +130,10 @@
           :"Wähle zuerst digitale Guthabenartikel. Versandprodukte sind derzeit nicht bestellbar.";
       }
     };
-    const draw=()=>{
+    const draw=(focus=null)=>{
       grid.replaceChildren();
       filters.replaceChildren();
+      let focusNode=null;
       const products=catalogue.products.filter(product=>
         selected==="all"||product.category_id===selected);
       if(catalogue.categories.length>1){
@@ -132,8 +141,9 @@
         for(const item of values){
           const b=element("button","shop-filter-v3",item.title);
           b.type="button";b.setAttribute("aria-pressed",String(item.id===selected));
-          b.addEventListener("click",()=>{selected=item.id;draw();});
+          b.addEventListener("click",()=>{selected=item.id;draw({filter:item.id});});
           filters.appendChild(b);
+          if(focus?.filter===item.id)focusNode=b;
         }
       }
       if(!products.length){
@@ -167,7 +177,7 @@
           decrease.type="button";decrease.disabled=quantity===0;
           decrease.setAttribute("aria-label","Einen "+item.title+" entfernen");
           decrease.addEventListener("click",()=>{
-            try{cartApi.writeCart(cartApi.updateCart(cartApi.readCart(),item.id,-1));draw();}
+            try{cartApi.writeCart(cartApi.updateCart(cartApi.readCart(),item.id,-1));draw({product:item.id,action:"decrease"});}
             catch{status.textContent="Warenkorb konnte nicht aktualisiert werden.";}
           });
           const increase=element("button","","＋");
@@ -175,19 +185,29 @@
             (current.length>=8&&quantity===0);
           increase.setAttribute("aria-label","Einen "+item.title+" hinzufügen");
           increase.addEventListener("click",()=>{
-            try{cartApi.writeCart(cartApi.updateCart(cartApi.readCart(),item.id,1));draw();}
+            try{cartApi.writeCart(cartApi.updateCart(cartApi.readCart(),item.id,1));draw({product:item.id,action:"increase"});}
             catch{status.textContent="Maximale Warenkorbmenge erreicht oder Speicher nicht verfügbar.";}
           });
           controls.appendChild(decrease);
           controls.appendChild(element("span","",quantity+" im Warenkorb"));
           controls.appendChild(increase);
           card.appendChild(controls);
+          if(focus?.product===item.id){
+            const preferred=focus.action==="decrease"?decrease:increase;
+            const alternative=preferred===decrease?increase:decrease;
+            focusNode=!preferred.disabled?preferred:!alternative.disabled?alternative:null;
+          }
         }
         grid.appendChild(card);
       }
       renderCart();
+      if(focusNode)focusNode.focus();
     };
     const load=async()=>{
+      if(pending)return;
+      pending=true;
+      catalogue=null;
+      suspendCart("Warenkorb wird mit dem aktuellen Katalog abgeglichen.");
       grid.setAttribute("aria-busy","true");
       status.textContent="Veröffentlichte Produkte werden geladen …";
       filters.replaceChildren();grid.replaceChildren();
@@ -200,12 +220,13 @@
           :"Derzeit sind keine Produkte veröffentlicht.";
       }catch{
         catalogue=null;
+        suspendCart("Testkasse nicht verfügbar. Deine gespeicherte Auswahl bleibt erhalten, bis der Katalog erneut bestätigt wurde.");
         status.textContent="Shop-Daten nicht abrufbar. Es werden keine veralteten Angebote angezeigt.";
         const retry=element("button","shop-retry-v3","Erneut versuchen");
         retry.type="button";
         retry.addEventListener("click",()=>{void load();});
         grid.appendChild(retry);
-      }finally{grid.setAttribute("aria-busy","false");}
+      }finally{pending=false;grid.setAttribute("aria-busy","false");}
     };
     void load();
   }

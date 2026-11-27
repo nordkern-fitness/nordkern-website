@@ -681,12 +681,15 @@
     }
     activeUser = identity.id;
     const user = identity.id;
+    const records=window.NordkernAccountRecords;
+    if(!records) throw new Error('Mitgliedsdaten-Modul nicht verfügbar. Bitte aktualisieren.');
+    const scopedRead=path=>authorized(path,{},scope);
     const [profiles, selections, memberships, passes, wallets, studioList, offers, checkoutCapabilities] = await Promise.all([
       authorized('/rest/v1/profiles?select=id,member_id,first_name,last_name,account_enabled&id=eq.' + user + '&limit=1'),
-      authorized('/rest/v1/member_studios?select=studio_id,change_allowed_at&user_id=eq.' + user + '&limit=1'),
-      authorized('/rest/v1/memberships?select=id,status,starts_at,current_period_end,cancellation_effective_at,minimum_term_ends_at,contract_price_cents,currency,pricing_snapshot&user_id=eq.' + user + '&limit=30'),
-      authorized('/rest/v1/passes?select=id,title,status,starts_at,expires_at&user_id=eq.' + user + '&limit=50'),
-      authorized('/rest/v1/wallet_balances?select=drinks,additional_drinks,creatine,protein&user_id=eq.' + user + '&limit=1'),
+      scopedRead('/rest/v1/member_studios?select=user_id,studio_id,change_allowed_at&user_id=eq.' + user + '&limit=2'),
+      records.loadOwnedRecords(scopedRead,'memberships',user),
+      records.loadOwnedRecords(scopedRead,'passes',user),
+      scopedRead('/rest/v1/wallet_balances?select=user_id,drinks,additional_drinks,creatine,protein&user_id=eq.' + user + '&limit=2'),
       authorized('/rest/v1/studios?select=id,name,slug,active&active=eq.true&order=name.asc&limit=50'),
       window.NordkernCatalog?.loadCatalogue?.().catch(() => []) ?? Promise.resolve([]),
       authorized('/functions/v1/create-offer-checkout')
@@ -701,17 +704,14 @@
       invalidateSession();
       throw new Error('Dieses Mitgliedskonto ist nicht freigeschaltet oder nicht mehr zugänglich. Bitte den Support kontaktieren.');
     }
-    if (!Array.isArray(selections) || selections.length > 1 ||
-        !Array.isArray(memberships) || memberships.length > 30 ||
-        !Array.isArray(passes) || passes.length > 50 ||
-        !Array.isArray(wallets) || wallets.length > 1 ||
-        !Array.isArray(studioList) || studioList.length > 50 ||
+    const {selection,wallet}=records.validateAccountRecords(user,selections,wallets);
+    if (!Array.isArray(studioList) || studioList.length > 50 ||
         !Array.isArray(offers)) {
       throw new Error('Mitgliedsdaten konnten nicht zuverlässig geladen werden.');
     }
     studios = studioList.filter(row => UUID.test(row?.id) && row.active === true &&
       typeof row.name === 'string' && /^[a-z0-9-]+$/.test(row.slug));
-    studioChoice = selections[0] ?? null;
+    studioChoice = selection;
     catalogue = offers.filter(row => row && ['membership','pass'].includes(row.kind) &&
       row.item && /^[a-z0-9-]{1,60}$/.test(row.item.slug));
     const person = profiles[0];
@@ -727,7 +727,7 @@
     byId('nk-studio-save').disabled = !!locked || studios.length === 0;
     if (locked) byId('nk-studio-status').textContent +=
       ' · Nächster Wechsel frühestens ' + date(studioChoice.change_allowed_at);
-    renderContractOverview(memberships,passes,wallets[0]??null,Date.now());
+    renderContractOverview(memberships,passes,wallet,Date.now());
     mountWalletLedger(user,scope);
     mountBillingRecords(user,scope);
     renderOptions(byId('nk-offer-select'), catalogue.map((row, index) => ({

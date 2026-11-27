@@ -7,7 +7,7 @@
   <title>Nordkern Fitness – Für deinen Weg nach vorn</title>
   <meta
     name="description"
-    content="Nordkern Fitness ist ein ruhiges, modernes 24/7-Fitnessstudio im Norden mit digitalem Zugang, klaren Tarifen und einer App für Mitgliedschaft, Tagespass, Urlaubspass und Zutritt."
+    content="Nordkern Fitness entwickelt ein ruhiges, modernes 24/7-Fitnessstudio-Konzept im Norden mit digitalem Zugang, klaren Tarifen und einer App."
   />
 
   <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png?v=3" />
@@ -122,6 +122,11 @@
     }
 
     .home-studio-tile-label {
+      max-width: calc(100% - 2rem);
+      padding: 0.45rem 0.65rem;
+      border-radius: 0.5rem;
+      background: rgba(0, 0, 0, 0.65);
+      overflow-wrap: anywhere;
       position: absolute;
       left: clamp(1rem, 2vw, 1.5rem);
       bottom: clamp(1rem, 2vw, 1.5rem);
@@ -129,7 +134,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
-      color: rgba(255, 255, 255, 0.78);
+      color: #ffffff;
       font-size: 0.66rem;
       line-height: 1;
       font-weight: 800;
@@ -604,21 +609,21 @@
   <main class="home-page-v3">
     <div data-home-intro></div>
 
-    <section class="home-tile-section" aria-label="Nordkern Fitness Studio Grevesmühlen">
+    <section class="home-tile-section" aria-label="Geplanter Nordkern Fitness Standort Grevesmühlen">
       <div class="home-studio-grid-v3">
         <article class="home-studio-tile-v3">
           <img src="images/H1.png" alt="" aria-hidden="true" />
-          <span class="home-studio-tile-label">Studio Grevesmühlen</span>
+          <span class="home-studio-tile-label">Studio Grevesmühlen · geplant</span>
         </article>
 
         <article class="home-studio-tile-v3 home-studio-tile-v3-small">
           <img src="images/H2.png" alt="" aria-hidden="true" />
-          <span class="home-studio-tile-label">Studio Grevesmühlen</span>
+          <span class="home-studio-tile-label">Studio Grevesmühlen · geplant</span>
         </article>
 
         <article class="home-studio-tile-v3 home-studio-tile-v3-small">
           <img src="images/H3.png" alt="" aria-hidden="true" />
-          <span class="home-studio-tile-label">Studio Grevesmühlen</span>
+          <span class="home-studio-tile-label">Studio Grevesmühlen · geplant</span>
         </article>
       </div>
     </section>

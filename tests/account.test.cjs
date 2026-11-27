@@ -76,7 +76,7 @@ test('server decides checkout entitlement, never browser redirects',()=>{
   assert.match(source,/\/functions\/v1\/create-offer-checkout/);
   assert.match(source,/returnSurface:'web'/);
   assert.match(source,/\/auth\/v1\/token\?grant_type=password/);
-  assert.match(source,/\/rest\/v1\/memberships\?select=/);
+  assert.match(source,/records\.loadOwnedRecords\(scopedRead,'memberships',user\)/);
   assert.match(source,/sessionStorage/);
 });
 

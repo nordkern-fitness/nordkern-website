@@ -50,7 +50,7 @@ function seed(){
   plans:[{...plan}],
   passes:[{...pass}],
   membership:{
-   id:MEMBERSHIP,status:'active',
+   id:MEMBERSHIP,user_id:USER,status:'active',
    starts_at:'2026-09-01T00:00:00Z',
    current_period_end:'2027-01-01T00:00:00Z',
    cancellation_effective_at:null,
@@ -159,13 +159,13 @@ async function installFixtures(page, state=seed()){
    value=[{id:USER,member_id:'NK-TEST-001',first_name:'Test',last_name:'Member',
      account_enabled:state.profileEnabled}];
   }else if(pathname==='/rest/v1/member_studios'){
-   value=[{studio_id:STUDIO,change_allowed_at:'2025-10-01T00:00:00Z'}];
+   value=[{user_id:USER,studio_id:STUDIO,change_allowed_at:'2025-10-01T00:00:00Z'}];
   }else if(pathname==='/rest/v1/memberships'){
    value=[state.membership];
   }else if(pathname==='/rest/v1/passes'){
    value=[];
   }else if(pathname==='/rest/v1/wallet_balances'){
-   value=[{drinks:3,additional_drinks:0,creatine:1,protein:0}];
+   value=[{user_id:USER,drinks:3,additional_drinks:0,creatine:1,protein:0}];
   }else if(pathname==='/rest/v1/orders'){
    value=state.orders;
   }else if(pathname==='/rest/v1/order_items'){

@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEST = ROOT / "preview"
 
 COMPONENTS = {
+    "home-intro": "components/home-intro.html",
     "header": "components/header.html",
     "footer": "components/footer.html",
     "contact-form": "components/contact-form.html",
@@ -25,16 +26,33 @@ COMPONENTS = {
 def inline_components(html):
     for slot, file in COMPONENTS.items():
         source = (ROOT / file).read_text(encoding="utf-8")
-        pattern = re.compile(r"<div\s+data-" + re.escape(slot) + r"\s*>\s*</div>")
+        pattern = re.compile(r"<div\b(?P<attrs>[^>]*\sdata-" + re.escape(slot) + r"(?=\s|>)[^>]*)>\s*</div>")
         html = pattern.sub(
             lambda match: (
-                '<div data-' + slot + ' data-preview-inlined="true">\n' +
+                '<div' + match.group("attrs") + ' data-preview-inlined="true">\n' +
                 source + '\n</div>'
             ),
             html,
         )
     return html
 
+
+# A preview artifact is NOT a published legal imprint. Do not make a second
+# downloadable copy of the founder's personal legal data in public PR CI.
+# This notice links to the unchanged official legal page; it does not replace it.
+PREVIEW_LEGAL_NOTICE = """<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nordkern Fitness – Rechtliche Angaben (Vorschau)</title></head>
+<body style="font:16px/1.6 system-ui;box-sizing:border-box;max-width:700px;margin:8vh auto;padding:24px;overflow-wrap:anywhere">
+<h1>Nur Entwicklungsvorschau – keine rechtliche Anbieterkennzeichnung</h1>
+<p>Dieses lokal erzeugte, nicht freigegebene Vorschaupaket ist kein öffentlicher Studio- oder Vertragsauftritt.</p>
+<p>Die rechtlichen Angaben dieser Kopie werden aus Datenschutzgründen nicht dupliziert.
+Die unveränderte rechtliche Anbieterkennzeichnung der veröffentlichten Website ist
+<a href="https://nordkern-fitness.de/impressum.html" rel="noopener noreferrer">hier erreichbar</a>.</p>
+<p>Die rechtliche Vollständigkeit der veröffentlichten Website ist vor einem weiteren geschäftlichen Angebot separat zu prüfen.</p>
+</body></html>"""
 
 def main():
     if DEST.exists():
@@ -45,7 +63,8 @@ def main():
 
     total = 0
     for original in ROOT.glob("*.html"):
-        html = inline_components(original.read_text(encoding="utf-8"))
+        html = (PREVIEW_LEGAL_NOTICE if original.name == "impressum.html"
+                else inline_components(original.read_text(encoding="utf-8")))
         (DEST / original.name).write_text(html, encoding="utf-8")
         total += 1
 
@@ -58,9 +77,11 @@ def main():
 <p>Diese Vorschau ist eine unveröffentlichte Arbeitsfassung. Sie ändert nichts an der echten Website.</p>
 <p><a href="index.html">Startseite ansehen</a> ·
 <a href="mitgliedschaften.html">Tarifseite ansehen</a> ·
-<a href="app.html">App-Seite ansehen</a></p>
+<a href="app.html">App-Seite ansehen</a> ·
+<a href="shop.html">Shop ansehen</a> ·
+<a href="konto.html">Mitgliederbereich ansehen</a></p>
 <p>Alle Seiten können ohne Terminal geöffnet werden.
-Der Live-Tarifkatalog benötigt allerdings Internet und eine funktionierende Verbindung zu Supabase.</p>
+Die Live-Kataloge benötigen Internet und eine Verbindung zu Supabase. Echte Kontoanmeldung und Stripe-Checkout müssen auf der freigegebenen Website getestet werden.</p>
 <p><strong>Hinweis:</strong> Formulare und geplante App-Funktionen sind nicht produktiv freigeschaltet.</p>
 </body></html>"""
     (DEST / "VORSCHAU-STARTEN.html").write_text(instructions, encoding="utf-8")

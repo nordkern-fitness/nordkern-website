@@ -7,7 +7,7 @@
   <title>Nordkern Fitness – Standorte</title>
   <meta
     name="description"
-    content="Nordkern Fitness Standort Grevesmühlen: ruhiges 24/7-Fitnessstudio im Norden mit digitalem Zugang über die App, klaren Tarifen, Tagespass und Urlaubspass."
+    content="Nordkern Fitness plant seinen ersten Standort in Grevesmühlen. Informationen zu Konzept, geplanten Tarifen und digitalem Zutritt. Eröffnung und Buchungen noch nicht bestätigt."
   />
 
   <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png?v=3" />
@@ -84,7 +84,7 @@
     }
 
     .location-image-v3::before {
-      content: "Studio-Bild lädt nicht – Dateiname prüfen";
+      content: "Studioansicht derzeit nicht verfügbar";
       position: absolute;
       left: clamp(1rem, 2vw, 1.5rem);
       top: clamp(1rem, 2vw, 1.5rem);
@@ -209,6 +209,118 @@
       line-height: 1.52;
       letter-spacing: -0.016em;
       text-wrap: balance;
+    }
+
+    .location-catalog-list-v3 {
+      display: grid;
+      gap: .55rem;
+      padding: 0;
+      margin: .8rem 0 1.2rem;
+      list-style: none;
+    }
+
+    .location-catalog-list-v3[hidden],
+    [data-nk-studio-retry][hidden] { display: none; }
+
+    .location-catalog-item-v3 {
+      display: grid;
+      gap: .25rem;
+      padding: .8rem 1rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,.82);
+      overflow-wrap: anywhere;
+    }
+
+    .location-catalog-item-v3 span {
+      font-size: .85rem;
+      color: var(--muted);
+    }
+
+    .location-map-consent-v3 {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: .85rem;
+      min-height: 100%;
+      padding: clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    .location-map-consent-v3 h3,
+    .location-map-consent-v3 p { margin: 0; }
+
+    .location-map-consent-v3 a { text-decoration: underline; }
+
+    .location-map-consent-v3 button:focus-visible,
+    [data-nk-studio-retry]:focus-visible { outline: 3px solid var(--nf-green); outline-offset: 3px; }
+
+    .location-public-section-v3 {
+      padding: 0 .75rem .75rem;
+      background: #ffffff;
+    }
+
+    .location-public-panel-v3 {
+      padding: clamp(1.25rem, 4vw, 3rem);
+      background: #f5f5f7;
+    }
+
+    .location-public-panel-v3 h2 {
+      margin: .4rem 0 1rem;
+      color: var(--text);
+      font-size: clamp(2.2rem, 5vw, 4.6rem);
+      letter-spacing: -.06em;
+      line-height: 1;
+      text-wrap: balance;
+    }
+
+    .location-public-panel-v3 > p:not(.eyebrow) {
+      max-width: 70ch;
+      color: var(--text-soft);
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .location-public-list-v3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+      gap: .85rem;
+      margin-top: 1.5rem;
+    }
+
+    .location-public-list-v3[hidden],
+    [data-nk-published-retry][hidden] { display: none; }
+
+    .location-public-card-v3 {
+      min-width: 0;
+      display: grid;
+      gap: .75rem;
+      align-content: start;
+      padding: clamp(1rem, 2.5vw, 2rem);
+      background: #ffffff;
+      border: 1px solid rgba(29,29,31,.08);
+      border-radius: 20px;
+      overflow-wrap: anywhere;
+    }
+
+    .location-public-card-v3 h3 { margin: 0; color: var(--text); font-size: clamp(1.6rem, 2.5vw, 2.3rem); line-height: 1.12; }
+    .location-public-card-v3 h4 { margin: .5rem 0 0; color: var(--text); font-size: 1.08rem; }
+    .location-public-card-v3 address { font-style: normal; color: var(--text); line-height: 1.5; }
+    .location-public-card-v3 p { margin: 0; line-height: 1.5; }
+    .location-public-state-v3 { color: var(--nf-green-dark); font-size: .78rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .location-public-note-v3 { color: var(--muted); font-size: .9rem; }
+    .location-public-hours-v3 { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 0; margin: 0; }
+    .location-public-hours-v3 dt,
+    .location-public-hours-v3 dd { margin: 0; padding: .6rem .25rem; border-bottom: 1px solid rgba(29,29,31,.09); }
+    .location-public-hours-v3 dt { font-weight: 700; }
+    .location-public-hours-v3 dd { color: var(--text-soft); font-variant-numeric: tabular-nums; }
+    .location-public-card-v3 details { padding: .8rem 0; }
+    .location-public-card-v3 summary { cursor: pointer; font-weight: 700; line-height: 1.5; }
+    .location-public-exceptions-v3 { padding-left: 1.2rem; margin: .7rem 0 0; line-height: 1.6; }
+    .location-public-card-v3 summary:focus-visible,
+    [data-nk-published-retry]:focus-visible { outline: 3px solid var(--nf-green); outline-offset: 3px; }
+    [data-nk-published-retry] { margin-top: .75rem; }
+    @media (max-width: 720px) {
+      .location-public-section-v3 { padding: 0 .5rem .5rem; }
     }
 
     .location-facts-v3 {
@@ -583,8 +695,8 @@
         <h1 id="locations-page-title">Nordkern Fitness im Norden.</h1>
 
         <p>
-          Der erste Standort entsteht in Grevesmühlen: ruhig, digital und 24/7 zugänglich —
-          für Mitglieder, Tagesgäste und kurze Aufenthalte in der Region.
+          Grevesmühlen ist als erster Nordkern-Fitness-Standort vorgesehen.
+          Freigegebene Betriebsinformationen, Adressen und Öffnungszeiten findest du unten. Zutritt und Buchungen werden separat freigegeben.
         </p>
       </div>
     </section>
@@ -597,40 +709,43 @@
         </article>
 
         <article class="location-info-v3">
-          <p class="location-status-v3">Aktiver Standort</p>
+          <p class="location-status-v3" data-nk-gvm-state>Standort in Planung</p>
+          <p data-nk-studio-data-status role="status" aria-live="polite">Standortkatalog wird geprüft. Der Katalogstatus allein bestätigt keine Eröffnung.</p>
+          <ul class="location-catalog-list-v3" data-nk-studio-list aria-label="Standorte im digitalen Katalog" hidden></ul>
+          <button type="button" class="route-button-v3" data-nk-studio-retry hidden>Standortkatalog erneut laden</button>
 
           <h2 id="location-gvm-title">Grevesmühlen.</h2>
 
           <p>
-            Der erste Nordkern Fitness Standort liegt in Grevesmühlen.
-            Der Zugang läuft digital über die App — mit Mitgliedschaft, Tagespass
-            oder Urlaubspass.
+            Der erste Nordkern-Fitness-Standort ist in Grevesmühlen vorgesehen.
+            App-Zutritt, Mitgliedschaft, Tagespass und Urlaubspass befinden sich in Vorbereitung.
+            Aktuell kann noch kein Studiozugang gebucht werden.
           </p>
 
           <div class="location-facts-v3" aria-label="Standortdetails">
             <div class="location-fact-v3">
               <span>Status</span>
-              <strong>Aktiver Standort</strong>
+              <strong data-nk-gvm-state>Standort in Planung</strong>
             </div>
 
             <div class="location-fact-v3">
               <span>Zugang</span>
-              <strong>24/7 per App und QR-Code</strong>
+              <strong>24/7-Zugang per App und QR-Code geplant</strong>
             </div>
 
             <div class="location-fact-v3">
               <span>Kurzzeit</span>
-              <strong>Tagespass und Urlaubspass über die App</strong>
+              <strong>Tagespass und Urlaubspass in Vorbereitung</strong>
             </div>
 
             <div class="location-fact-v3">
               <span>Ausstattung</span>
-              <strong>Trainingsfläche, Umkleiden, Toiletten, Waschbecken und Spinde</strong>
+              <strong>Geplantes Konzept: Trainingsfläche, Umkleiden, Toiletten, Waschbecken und Spinde</strong>
             </div>
 
             <div class="location-fact-v3">
               <span>Hinweis</span>
-              <strong>Keine Duschen im Studio</strong>
+              <strong>Duschen sind im bisherigen Konzept nicht vorgesehen</strong>
             </div>
           </div>
 
@@ -641,7 +756,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              Route öffnen
+              Grevesmühlen auf Karte
             </a>
 
             <a class="route-button-v3" href="mitgliedschaften.html">
@@ -656,6 +771,18 @@
       </div>
     </section>
 
+    <section class="location-public-section-v3" aria-labelledby="location-public-title">
+      <div class="location-public-panel-v3">
+        <p class="eyebrow">Standortinformationen</p>
+        <h2 id="location-public-title">Adresse und Öffnungszeiten.</h2>
+        <p>Hier erscheinen ausschließlich ausdrücklich freigegebene Standortdaten. Geplante und bestätigte Betriebsinformationen werden getrennt gekennzeichnet.</p>
+        <p data-nk-published-status role="status" aria-live="polite">Veröffentlichte Standortinformationen werden geprüft …</p>
+        <div class="location-public-list-v3" data-nk-published-list hidden></div>
+        <button type="button" class="route-button-v3" data-nk-published-retry hidden>Standortinformationen erneut laden</button>
+        <noscript><p>Für den aktuellen Veröffentlichungsstand ist JavaScript erforderlich. Bei Fragen kannst du uns über die Kontaktseite erreichen.</p></noscript>
+      </div>
+    </section>
+
     <section class="location-feature-section-v3" aria-labelledby="location-feature-title">
       <div class="location-feature-panel-v3">
         <div class="location-feature-content-v3">
@@ -664,16 +791,15 @@
           <h2 id="location-feature-title">Ein Studio. Immer dann, wenn dein Tag passt.</h2>
 
           <p>
-            Mitgliedschaft buchen, QR-Code öffnen, trainieren. Nordkern Fitness ist auf
-            einen ruhigen Ablauf ausgelegt — ohne Empfangstheke, ohne Papierkram,
-            ohne komplizierte Wege.
+            Geplant sind digitale Mitgliedschaften und QR-Zutritt. Der Studiozugang ist noch nicht verfügbar.
+            Wir entwickeln einen ruhigen, einfachen Ablauf ohne unnötigen Papierkram.
           </p>
 
           <div class="location-feature-chips-v3" aria-label="Nordkern Standortvorteile">
-            <span class="location-feature-chip-v3">24/7 Zugang</span>
-            <span class="location-feature-chip-v3">QR-Code per App</span>
-            <span class="location-feature-chip-v3">Tagespass</span>
-            <span class="location-feature-chip-v3">Urlaubspass</span>
+            <span class="location-feature-chip-v3">24/7 geplant</span>
+            <span class="location-feature-chip-v3">QR-Zutritt geplant</span>
+            <span class="location-feature-chip-v3">Tagespass geplant</span>
+            <span class="location-feature-chip-v3">Urlaubspass geplant</span>
           </div>
         </div>
       </div>
@@ -693,13 +819,13 @@
           </p>
         </div>
 
-        <div class="location-map-frame-v3" aria-label="Karte Grevesmühlen">
-          <iframe
-            title="Karte: Grevesmühlen"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            src="https://www.google.com/maps?q=Grevesm%C3%BChlen&output=embed"
-          ></iframe>
+        <div class="location-map-frame-v3" data-nk-map-frame aria-label="Karte Grevesmühlen">
+          <div class="location-map-consent-v3">
+            <h3>Interaktive Karte</h3>
+            <p>Erst wenn du die Karte lädst, wird eine Verbindung zu Google Maps hergestellt.</p>
+            <button type="button" class="route-button-v3 route-button-v3-primary" data-nk-map-load>Karte laden</button>
+            <a href="https://www.google.com/maps/search/?api=1&amp;query=Grevesm%C3%BChlen" target="_blank" rel="noopener noreferrer">Karte extern öffnen</a>
+          </div>
         </div>
       </div>
     </section>
@@ -734,5 +860,6 @@
   <div data-footer></div>
 
   <script src="js/main.js"></script>
+  <script src="js/studios.js"></script>
 </body>
 </html>

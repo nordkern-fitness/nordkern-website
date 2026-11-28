@@ -1,0 +1,65 @@
+<style>
+.nk-intro{--nk-green:#147538;--nk-ink:#17231c;--nk-muted:#56665b;--nk-orange:#ed9145;box-sizing:border-box;max-width:1280px;margin:auto;padding:clamp(92px,10vw,142px) clamp(18px,4vw,56px) 36px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--nk-ink)}
+.nk-intro *{box-sizing:border-box}
+.nk-intro .nk-intro-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(30px,5vw,78px);align-items:center}
+.nk-intro .nk-intro-kicker{display:flex;align-items:center;gap:10px;margin:0 0 22px;font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--nk-green)}
+.nk-intro-kicker:before{content:"";width:25px;height:3px;background:var(--nk-orange);border-radius:4px}
+.nk-intro h1{font-size:clamp(48px,6.5vw,90px);line-height:.99;letter-spacing:-.072em;font-weight:780;margin:0;max-width:11ch;text-wrap:balance}
+.nk-intro h1 span{color:var(--nk-green)}
+.nk-intro .nk-intro-copy{font-size:clamp(16px,1.5vw,20px);line-height:1.6;letter-spacing:-.015em;color:var(--nk-muted);max-width:35ch;margin:24px 0 28px}
+.nk-intro .nk-intro-actions{display:flex;gap:10px;flex-wrap:wrap}
+.nk-intro a.nk-intro-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:52px;padding:12px 22px;border-radius:14px;border:1px solid #d4e0d6;font-weight:720;font-size:15px;text-decoration:none;color:var(--nk-ink);background:#fff;transition:background .18s,transform .18s}
+.nk-intro a.nk-intro-button-primary{background:var(--nk-green);color:white;border-color:var(--nk-green)}
+.nk-intro a.nk-intro-button:hover{transform:translateY(-2px);background:#eff5ef}
+.nk-intro a.nk-intro-button-primary:hover{background:#105c2c}
+.nk-intro :focus-visible{outline:3px solid #ed9145;outline-offset:4px}
+.nk-intro .nk-intro-panel{position:relative;overflow:hidden;isolation:isolate;min-height:410px;display:flex;flex-direction:column;justify-content:space-between;padding:30px;border-radius:28px;background:#14291e;color:#f5f8f2;border:1px solid #1f3e2a}
+.nk-intro .nk-intro-panel:before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 93% 5%,#437653 0,transparent 68%),linear-gradient(145deg,#14291e,#102218);pointer-events:none}
+.nk-intro .nk-intro-panel-top{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;font-weight:750;letter-spacing:.13em;text-transform:uppercase;color:#c9ddce}
+.nk-intro .nk-intro-panel-top span:last-child{color:#ffc18a}
+.nk-intro .nk-intro-graphic{width:100%;max-height:210px;margin:22px auto;display:block}
+.nk-intro .nk-intro-panel strong{font-size:clamp(36px,4vw,54px);line-height:1;letter-spacing:-.055em;font-weight:760;display:block}
+.nk-intro .nk-intro-panel p{margin:10px 0 0;color:#c9ddce;font-size:15px;line-height:1.5}
+.nk-intro .nk-intro-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:40px}
+.nk-intro .nk-intro-link{display:grid;grid-template-columns:1fr auto;align-items:start;gap:10px;padding:22px;border:1px solid #dce6dc;border-radius:18px;background:#f5f8f3;color:var(--nk-ink);text-decoration:none;transition:background .18s,transform .18s}
+.nk-intro .nk-intro-link:hover{background:#e9f2e9;transform:translateY(-2px)}
+.nk-intro .nk-intro-link small{display:block;color:var(--nk-muted);font-size:12px;font-weight:650;margin-bottom:8px}
+.nk-intro .nk-intro-link b{font-size:20px;line-height:1.15;letter-spacing:-.035em;display:block}
+.nk-intro .nk-intro-link i{font-style:normal;color:var(--nk-green);font-size:22px}
+.nk-intro .nk-intro-details{margin-top:16px;border-top:1px solid #dce6dc;padding:16px 0 0;color:var(--nk-muted);font-size:15px;line-height:1.6}
+.nk-intro .nk-intro-details summary{cursor:pointer;color:var(--nk-green);font-weight:720;min-height:44px;display:list-item;padding:8px 0}
+.nk-intro .nk-intro-details p{max-width:70ch;margin:8px 0}
+@media(max-width:900px){.nk-intro .nk-intro-grid{grid-template-columns:1fr;gap:26px}.nk-intro h1{max-width:12ch}.nk-intro .nk-intro-panel{min-height:340px}.nk-intro .nk-intro-graphic{max-height:165px}.nk-intro .nk-intro-links{margin-top:24px}}
+@media(max-width:570px){.nk-intro{padding:94px 18px 24px}.nk-intro h1{font-size:clamp(43px,11.4vw,62px)}.nk-intro .nk-intro-copy{margin:18px 0 22px}.nk-intro .nk-intro-actions{display:grid;grid-template-columns:1fr}.nk-intro .nk-intro-panel{min-height:300px;padding:22px;border-radius:22px}.nk-intro .nk-intro-links{grid-template-columns:1fr;gap:8px}.nk-intro .nk-intro-link{padding:16px 18px}.nk-intro .nk-intro-link small{margin-bottom:5px}}
+@media(prefers-reduced-motion:reduce){.nk-intro *{transition:none!important;scroll-behavior:auto!important}.nk-intro a:hover{transform:none!important}}
+</style>
+<section class="nk-intro" aria-labelledby="home-hero-title">
+  <div class="nk-intro-grid">
+    <div>
+      <p class="nk-intro-kicker">Nordkern Fitness · Dein Training</p>
+      <h1 id="home-hero-title">Für deinen Weg <span>nach vorn.</span></h1>
+      <p class="nk-intro-copy">Ein ruhiges, modernes Fitnessstudio im Norden. Digitaler Zugang, klare Tarife und flexible Pässe – für dein Training in deinem Tempo.</p>
+      <div class="nk-intro-actions" aria-label="Wichtige Links">
+        <a class="nk-intro-button nk-intro-button-primary" href="mitgliedschaften.html">Tarife ansehen <span aria-hidden="true">→</span></a>
+        <a class="nk-intro-button" href="standorte.html">Standort ansehen</a>
+      </div>
+    </div>
+    <div class="nk-intro-panel">
+      <div class="nk-intro-panel-top"><span>Nordkern · Trainingskonzept</span><span>01 / Vorwärts</span></div>
+      <svg class="nk-intro-graphic" viewBox="0 0 420 210" fill="none" aria-hidden="true" focusable="false">
+        <path d="M12 185H408M12 135H408M12 85H408M12 35H408M65 10V200M165 10V200M265 10V200M365 10V200" stroke="#91b69b" stroke-opacity=".14"/>
+        <path d="M35 178 152 61 213 122 330 5M35 205 152 88 213 149 330 32" stroke="#719c7c" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="m72 168 88-88 58 58 126-126" stroke="#f4f8f2" stroke-width="22" stroke-linecap="square" stroke-linejoin="bevel"/>
+        <path d="M306 12h38v38" stroke="#ed9145" stroke-width="22" stroke-linecap="square" stroke-linejoin="miter"/>
+        <circle cx="72" cy="168" r="8" fill="#ed9145"/>
+      </svg>
+      <div><strong>24/7.</strong><p>Das geplante Nordkern-Konzept: Freiraum für deinen eigenen Rhythmus.</p></div>
+    </div>
+  </div>
+  <nav class="nk-intro-links" aria-label="Nordkern entdecken">
+    <a class="nk-intro-link" href="mitgliedschaften.html"><span><small>01 · Mitgliedschaften</small><b>Dein Tarif.</b></span><i aria-hidden="true">↗</i></a>
+    <a class="nk-intro-link" href="standorte.html"><span><small>02 · Standorte</small><b>Dein Studio.</b></span><i aria-hidden="true">↗</i></a>
+    <a class="nk-intro-link" href="app.html"><span><small>03 · Digital</small><b>Deine App.</b></span><i aria-hidden="true">↗</i></a>
+  </nav>
+  <details class="nk-intro-details"><summary>Was bedeutet Nordkern für dein Training?</summary><p>Mitgliedschaften und flexible Pässe, digitale Kontoverwaltung und ein ruhiges Trainingsumfeld gehören zum Nordkern-Konzept. Aktuelle Angebote und Freigaben findest du auf den jeweiligen Tarif-, Standort- und App-Seiten.</p></details>
+</section>

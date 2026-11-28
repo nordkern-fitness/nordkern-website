@@ -1,0 +1,40 @@
+/* Nordkern FDS account overview: the actual portal uses this same component. */
+.nk-overview{--nk-forest:#163d28;--nk-paper:#f3f7f1;--nk-orange:#ed9145;display:grid;gap:20px;color:#17231c;min-width:0}
+.nk-overview *{box-sizing:border-box;min-width:0}
+.nk-overview h3,.nk-overview h4,.nk-account-panel .nk-overview h3,.nk-account-panel .nk-overview h4{margin:0;color:inherit;letter-spacing:-.045em;line-height:1.15;font-weight:760}
+.nk-overview h3{font-size:clamp(1.55rem,3vw,2.1rem)}
+.nk-overview h4{font-size:clamp(1.5rem,3vw,2.1rem)}
+.nk-overview p,.nk-account-panel .nk-overview p{margin:0;color:inherit;line-height:1.5;overflow-wrap:anywhere}
+.nk-overview-intro{display:grid;gap:7px}
+.nk-overview .nk-overview-kicker,.nk-account-panel .nk-overview .nk-overview-kicker{font-size:.7rem;font-weight:800;letter-spacing:.13em;color:#1a713a;line-height:1.4}
+.nk-overview-intro>p:last-child,.nk-overview-note{font-size:.9rem;color:#52665a!important}
+.nk-overview-contracts{display:grid;gap:14px}
+.nk-overview-contracts:empty{display:none}
+.nk-overview-plan{display:grid;gap:14px;padding:clamp(20px,4vw,30px);border-radius:22px;background:linear-gradient(135deg,#163d28,#10281c);color:#f7faf5;position:relative;overflow:hidden}
+.nk-overview-plan:before{content:'';position:absolute;top:0;left:24px;width:34px;height:4px;border-radius:0 0 3px 3px;background:var(--nk-orange)}
+.nk-overview-plan .nk-overview-kicker,.nk-account-panel .nk-overview-plan .nk-overview-kicker{color:#b8d8bd}
+.nk-overview-state{display:inline-flex;justify-self:start;align-items:center;gap:7px;font-size:.78rem;font-weight:700;padding:7px 10px;border-radius:9px;background:#374c3b;color:#fff;line-height:1.4}
+.nk-overview-state[data-active=true]{background:#d7f0d5;color:#194b2a}
+.nk-overview-state[data-active=true]:before{content:'';width:7px;height:7px;border-radius:50%;background:#1a713a;flex-shrink:0}
+.nk-overview-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:17px 0;border-block:1px solid #ffffff29}
+.nk-overview-fact{display:grid;gap:5px;align-content:start;overflow-wrap:anywhere}
+.nk-overview-fact span{color:#c6d7cb;font-size:.8rem}
+.nk-overview-fact strong{font-size:clamp(1.15rem,2.4vw,1.6rem);line-height:1.2;font-weight:760;font-variant-numeric:tabular-nums}
+.nk-overview-details summary{cursor:pointer;font-size:.9rem;font-weight:700;padding:10px 0;min-height:44px;line-height:24px}
+.nk-overview-details p,.nk-account-panel .nk-overview-details p{font-size:.88rem;color:#dce9df;margin:6px 0}
+.nk-overview-details summary:focus-visible{outline:3px solid var(--nk-orange);outline-offset:3px}
+.nk-overview-pass{display:grid;gap:8px;border:1px solid #dce6dc;border-radius:18px;padding:20px;background:#fff}
+.nk-overview-wallet{display:grid;gap:10px}
+.nk-overview-wallet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.nk-overview-unit{display:flex;flex-direction:column;gap:7px;justify-content:space-between;min-height:130px;padding:15px;border:1px solid #dce6dc;border-radius:17px;background:var(--nk-paper)}
+.nk-overview-unit-label{font-size:.8rem;font-weight:700;line-height:1.35;overflow-wrap:anywhere;color:#2c543a}
+.nk-overview-unit strong{font-size:clamp(2rem,5vw,2.75rem);line-height:1;font-weight:760;letter-spacing:-.055em;font-variant-numeric:tabular-nums;color:#173d27}
+.nk-overview-unit-caption{font-size:.74rem;color:#52665a;line-height:1.3}
+.nk-overview-empty{padding:16px;border-radius:15px;background:var(--nk-paper);font-size:.9rem;color:#52665a!important}
+@media(max-width:850px){.nk-overview-wallet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:360px){.nk-overview-facts{grid-template-columns:1fr}.nk-overview-unit{padding:12px}}
+/* Actual account layout: contract section takes the full width rather than a narrow second column. */
+.nk-account-grid.nk-account-workspace{grid-template-columns:minmax(0,1fr);gap:0}
+.nk-account-workspace #vertraege{order:-1}
+.nk-account-workspace #nk-member-contracts{display:grid;gap:14px;margin-bottom:16px}
+.nk-account-workspace #nk-member-contracts>.nk-account-contract{margin:0}

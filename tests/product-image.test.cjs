@@ -1,0 +1,10 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {keyFor,endpoint,createImage}=require('../js/product-image.js');
+const id='11111111-1111-4111-8111-111111111111',asset='22222222-2222-4222-8222-222222222222',base='https://fixture.supabase.co',key=id+'/'+asset+'.png';
+const product={id,image_key:key};
+test('current managed key maps to product endpoint, not storage path',()=>{assert.equal(keyFor(key,id),true);assert.equal(endpoint(base,product),base+'/functions/v1/product-image?product='+id);});
+test('foreign key, path traversal, arbitrary image URLs and missing image rejected',()=>{for(const image_key of [null,undefined,asset+'/'+asset+'.png',id+'/../x.png','https://evil.invalid/x.png',id+'/'+asset+'.svg',key+'?token=x'])assert.equal(endpoint(base,{id,image_key}),null);});
+test('untrusted config cannot send a browser request',()=>{for(const origin of ['http://fixture.supabase.co','https://fixture.supabase.co.evil.invalid','https://user@fixture.supabase.co','https://fixture.supabase.co/','https://fixture.supabase.co:444'])assert.equal(endpoint(origin,product),null);});
+test('decorative image has reserved dimensions and lazy loading, failure hides it',()=>{const events={};const img={addEventListener:(name,fn)=>{events[name]=fn;}};assert.equal(createImage({createElement:tag=>{assert.equal(tag,'img');return img;}},base,product),img);assert.equal(img.alt,'');assert.equal(img.loading,'lazy');assert.equal(img.referrerPolicy,'no-referrer');assert.equal(img.width,480);events.error();assert.equal(img.hidden,true);});
+test('invalid product never creates an image element',()=>{assert.equal(createImage({createElement:()=>assert.fail()},base,{id,image_key:null}),null);});

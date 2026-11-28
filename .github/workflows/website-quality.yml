@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: website-quality-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integrity:
     name: Website checks and preview
@@ -26,17 +30,53 @@ jobs:
         run: |
           node --check js/main.js
           node --check js/catalog.js
+          node --check js/studios.js
+          node --check js/account.js
+          node --check js/account-overview.js
+          node --check js/shop.js
+          node --check js/product-image.js
+          node --check js/shop-cart.js
 
       - name: Test public catalogue client
         run: node --test tests/*.test.cjs
 
+      - name: Check exposure policy without printing legal name or email
+        run: |
+          python3 -m unittest discover -s tests -p 'test_privacy_audit.py'
+          python3 scripts/privacy_audit.py
+
+      - name: Test local private preview HTTP boundary
+        run: python3 -m unittest discover -s tests -p 'test_private_preview.py'
+
       - name: Build double-click preview
-        run: python3 scripts/build_preview.py
+        run: python3 scripts/build_standalone.py
+
+      - name: Ensure downloadable preview contains no legal personal name
+        run: python3 scripts/privacy_audit.py --preview
 
       - name: Upload downloadable website preview
+        if: github.event.repository.private == true && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: Nordkern-Website-Vorschau
           path: preview/
+          if-no-files-found: error
+          retention-days: 14
+
+      # In a public PR, do not automatically upload another unredacted copy
+      # of the entire historical legal source. Manual source export remains.
+      - name: Package complete versioned website source
+        if: github.event.repository.private == true && github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p release
+          git archive --format=zip --output=release/Nordkern-Website-Source.zip HEAD
+          unzip -t release/Nordkern-Website-Source.zip
+
+      - name: Upload complete website source
+        if: github.event.repository.private == true && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nordkern-Website-Source
+          path: release/Nordkern-Website-Source.zip
           if-no-files-found: error
           retention-days: 14

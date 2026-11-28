@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Geschützter Nordkern-Fitness-Mitgliederbereich: anmelden, Testkonto registrieren, Verträge und Shopbestellungen einsehen." />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Mitgliederbereich – Nordkern Fitness</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png?v=3" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/nordkern-brand.css" />
+  <link rel="stylesheet" href="css/konto.css" />
+  <link rel="stylesheet" href="css/account-overview.css" />
+</head>
+<body>
+  <div data-header></div>
+  <main class="nk-account">
+    <header class="nk-account-hero">
+      <p class="eyebrow">Nordkern FDS · Mitgliederbereich</p>
+      <h1>Dein Konto. Klar im Blick.</h1>
+      <p>Studio, Mitgliedschaft, Pässe und deine nächsten Schritte – gesichert über dieselbe Nordkern-Datenbank wie in der App.</p>
+    </header>
+    <div class="nk-account-shell">
+      <p class="nk-account-test-note" role="status">Entwicklungsversion: Buchungen sind ausschließlich im Stripe-Testmodus möglich. Eine Rückleitung bestätigt noch keine Zahlung und eröffnet keinen Zutritt.</p>
+      <p class="nk-account-feedback" id="nk-account-feedback" role="status" aria-live="polite"></p>
+      <p class="nk-account-error" id="nk-account-error" role="alert" aria-live="assertive" hidden></p>
+
+      <section class="nk-account-panel" id="nk-login-panel" aria-labelledby="nk-login-title">
+        <p class="eyebrow">Schon Mitglied?</p>
+        <h2 id="nk-login-title">Sicher anmelden.</h2>
+        <p>Melde dich mit deinem bestehenden Konto an oder registriere ein Testkonto. Eine kostenpflichtige Mitgliedschaft entsteht erst nach gesonderter, bestätigter Buchung.</p>
+        <button type="button" class="nk-account-subtle" id="nk-show-signup" aria-expanded="false" aria-controls="nk-signup-form">
+          Noch kein Konto? Registrieren
+        </button>
+        <form id="nk-signup-form" class="nk-account-signup" hidden>
+          <h3>Dein Nordkern-Konto erstellen.</h3>
+          <p>Eine Registrierung erzeugt noch keine bezahlte Mitgliedschaft und keinen Zutritt. Bestätige die E-Mail, falls der Anmeldedienst das verlangt.</p>
+          <label for="nk-signup-first">Vorname</label>
+          <input id="nk-signup-first" name="firstName" autocomplete="given-name" required maxlength="100" />
+          <label for="nk-signup-last">Nachname</label>
+          <input id="nk-signup-last" name="lastName" autocomplete="family-name" required maxlength="100" />
+          <label for="nk-signup-email">E-Mail-Adresse</label>
+          <input id="nk-signup-email" name="email" type="email" autocomplete="email" required maxlength="254" />
+          <label for="nk-signup-password">Passwort (12 bis 256 Zeichen)</label>
+          <input id="nk-signup-password" name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" />
+          <label for="nk-signup-studio">Dein Startstudio</label>
+          <select id="nk-signup-studio" name="homeStudioSlug" required disabled>
+            <option value="">Studios werden geladen …</option>
+          </select>
+          <p id="nk-signup-studio-status" class="nk-account-hint" role="status">Registrierbare Studios werden geprüft.</p>
+          <button type="button" class="nk-account-subtle" id="nk-signup-studio-retry">Studioauswahl erneut laden</button>
+          <div class="nk-account-consent">
+            <label for="nk-signup-terms"><input id="nk-signup-terms" name="acceptedTerms" type="checkbox" required />
+              Ich habe den <a href="impressum.html#agb">AGB-Entwurf</a> gelesen und bestätige die AGB-Erklärung für die Testregistrierung.</label>
+            <label for="nk-signup-privacy"><input id="nk-signup-privacy" name="acceptedPrivacy" type="checkbox" required />
+              Ich habe die <a href="impressum.html#datenschutz">Datenschutzinformationen</a> gelesen und bestätige die Datenschutzangaben.</label>
+          </div>
+          <p class="nk-account-hint">Rechtliche Dokumente und der verbindliche Vertragstext müssen vor dem produktiven Betrieb gesondert freigegeben werden.</p>
+          <button type="submit" id="nk-signup-submit" disabled>Testkonto registrieren</button>
+          <button type="button" class="nk-account-subtle" id="nk-show-login">Zur Anmeldung zurück</button>
+        </form>
+        <form id="nk-login-form">
+          <label for="nk-login-email">E-Mail-Adresse</label>
+          <input type="email" id="nk-login-email" name="email" autocomplete="email" maxlength="254" required />
+          <label for="nk-login-password">Passwort</label>
+          <input type="password" id="nk-login-password" name="password" autocomplete="current-password" required minlength="8" />
+          <button type="submit" id="nk-login-submit">Anmelden</button>
+        </form>
+        <form id="nk-reset-form" class="nk-account-reset">
+          <label for="nk-reset-email">Passwort vergessen?</label>
+          <div class="nk-account-inline">
+            <input type="email" id="nk-reset-email" name="email" placeholder="E-Mail-Adresse" autocomplete="email" maxlength="254" required />
+            <button type="submit" class="nk-account-subtle">Zurücksetzen</button>
+          </div>
+        </form>
+        <form id="nk-confirmation-form" class="nk-account-reset">
+          <label for="nk-confirmation-email">Bestätigungs-E-Mail nicht angekommen?</label>
+          <div class="nk-account-inline">
+            <input type="email" id="nk-confirmation-email" name="email"
+              placeholder="E-Mail-Adresse" autocomplete="email" maxlength="254" required />
+            <button type="submit" class="nk-account-subtle">Erneut anfordern</button>
+          </div>
+          <p class="nk-account-hint">Eine neue Bestätigung wird nur bei einem ausstehenden Konto und eingerichteter Mailzustellung versendet.</p>
+        </form>
+      </section>
+
+      <section id="nk-member-panel" hidden aria-label="Dein Mitgliederkonto">
+        <div class="nk-account-panel">
+          <div class="nk-account-head-row">
+            <div>
+              <p class="eyebrow">Mitgliederkonto</p>
+              <h2 id="nk-member-name">Dein Nordkern-Konto.</h2>
+            </div>
+            <button type="button" class="nk-account-subtle" id="nk-logout">Abmelden</button>
+          </div>
+          <p id="nk-member-id"></p>
+          <button type="button" class="nk-account-subtle" id="nk-reload">Daten aktualisieren</button>
+          <nav class="nk-account-shortcuts" aria-label="Bereiche deines Kontos">
+            <a href="#vertraege">Verträge & Guthaben</a>
+            <a href="#shop">Warenkorb</a>
+            <a href="#bestellungen">Bestellungen</a>
+            <a href="#geraete">Geräte</a>
+            <a href="#konto-sicherheit">Kontosicherheit</a>
+          </nav>
+        </div>
+        <div class="nk-account-grid nk-account-workspace">
+          <section class="nk-account-panel" aria-labelledby="nk-studio-title">
+            <p class="eyebrow">Dein Studio</p>
+            <h2 id="nk-studio-title">Standort.</h2>
+            <p id="nk-studio-status">Studiozuordnung wird geladen.</p>
+            <label for="nk-studio-select">Zugeordnetes Studio</label>
+            <select id="nk-studio-select"></select>
+            <button type="button" id="nk-studio-save">Studioauswahl speichern</button>
+            <p class="nk-account-hint">Ein Studiowechsel wird nur bei serverseitiger Freigabe durchgeführt.</p>
+          </section>
+          <section class="nk-account-panel" id="vertraege" aria-labelledby="nk-contract-title">
+            <p class="eyebrow">Vertrag und Guthaben</p>
+            <h2 id="nk-contract-title">Deine Leistungen.</h2>
+            <div id="nk-member-contracts" role="status" aria-live="polite">Vertragsdaten werden geladen.</div>
+            <p class="nk-account-hint">Verbindlich sind die im Vertrag bestätigten Konditionen. Eine Rückleitung von Stripe ist kein Zahlungsnachweis.</p>
+            <button type="button" class="nk-account-subtle" id="nk-billing-portal" disabled>
+              Stripe-Testabrechnung öffnen
+            </button>
+            <p class="nk-account-hint">Das Abrechnungsportal ist ausschließlich für Testkunden verfügbar und aktiviert selbst keinen Studiozutritt.</p>
+          </section>
+        </div>
+        <section class="nk-account-panel" aria-labelledby="nk-offer-title">
+          <p class="eyebrow">Bezahlvorgang</p>
+          <h2 id="nk-offer-title">Tarif oder Pass wählen.</h2>
+          <p>Die Konditionen werden ausschließlich aus dem aktuellen Supabase-Katalog geladen. Es wird kein Vertrag allein durch die Rückkehr aus Stripe aktiviert.</p>
+          <label for="nk-offer-select">Angebot</label>
+          <select id="nk-offer-select"></select>
+          <button type="button" id="nk-checkout-button">Stripe-Testcheckout öffnen</button>
+          <p id="nk-checkout-availability" class="nk-account-hint" role="status" aria-live="polite">Testcheckout-Verfügbarkeit wird serverseitig geprüft.</p>
+          <p class="nk-account-hint">Bis zur Konfiguration des serverseitigen Testcheckouts bleibt die Funktion gesperrt. Produktive Zahlungen werden nicht ausgelöst.</p>
+          <p class="nk-account-hint">Den dynamischen Zutrittscode kannst du ausschließlich mit der iOS-/Android-App und einem zugelassenen Gerät anzeigen.</p>
+        </section>
+        <section class="nk-account-panel" id="shop" aria-labelledby="nk-shop-member-title">
+          <p class="eyebrow">Digitaler Testshop</p>
+          <h2 id="nk-shop-member-title">Deine Testbestellung.</h2>
+          <p>Der Warenkorb enthält ausschließlich die Produkt-IDs aus dem öffentlichen Shop. Preise und Berechtigungen bestätigt immer der Server.</p>
+          <div id="nk-web-shop-cart" role="status" aria-live="polite"></div>
+          <p class="nk-account-hint">Du kannst die Menge hier ändern oder im Shop weitere Produkte auswählen. Änderungen werden für dieses Browserfenster gespeichert.</p>
+          <p id="nk-web-shop-checkout-status" class="nk-account-hint" role="status" aria-live="polite"></p>
+          <button type="button" id="nk-web-shop-checkout" disabled>Stripe-Testbestellung öffnen</button>
+          <p><a href="shop.html">Zum Shop und Warenkorb zurück</a></p>
+        </section>
+        <section class="nk-account-panel" id="bestellungen" aria-labelledby="nk-orders-title">
+          <p class="eyebrow">Persönlicher Verlauf</p>
+          <h2 id="nk-orders-title">Deine Bestellungen.</h2>
+          <p>Nur Bestellungen deines angemeldeten Kontos. Eine Stripe-Rückleitung ist kein Zahlungsnachweis.</p>
+          <label for="nk-order-filter">Bestellstatus</label>
+          <select id="nk-order-filter">
+            <option value="all">Alle Bestellungen</option>
+            <option value="pending_payment">Zahlung ausstehend</option>
+            <option value="paid">Bezahlt</option>
+            <option value="partially_refunded">Teilweise erstattet</option>
+            <option value="refunded">Erstattet</option>
+            <option value="cancelled">Abgebrochen</option>
+            <option value="failed">Fehlgeschlagen</option>
+          </select>
+          <p id="nk-order-count" class="nk-account-hint" role="status" aria-live="polite"></p>
+          <div id="nk-web-order-history" role="status" aria-live="polite">Bestellhistorie wird geladen.</div>
+          <button type="button" id="nk-orders-reload" class="nk-account-subtle">Bestellungen aktualisieren</button>
+        </section>
+        <section class="nk-account-panel" id="geraete" aria-labelledby="nk-own-devices-title">
+          <p class="eyebrow">Zutrittssicherheit</p>
+          <h2 id="nk-own-devices-title">Deine Geräte.</h2>
+          <p>Hier kannst du ein verlorenes oder nicht mehr verwendetes Smartphone sofort für den QR-Zutritt sperren.
+            Die Sperre wird serverseitig geprüft und gilt auch für bereits ausgegebene QR-Codes.</p>
+          <div id="nk-own-devices" role="status" aria-live="polite">
+            Deine registrierten Geräte werden geladen.
+          </div>
+          <button type="button" class="nk-account-subtle" id="nk-own-devices-reload">
+            Geräteliste aktualisieren
+          </button>
+        </section>
+        <section class="nk-account-panel nk-account-app-bridge" aria-labelledby="nk-app-bridge-title">
+          <p class="eyebrow">Web & App</p>
+          <h2 id="nk-app-bridge-title">Dein Zugang, zwei Oberflächen.</h2>
+          <p>Im Web verwaltest du Verträge, Bestellungen und Geräte. Dynamische QR-Codes sind ausschließlich in einer freigegebenen App-Installation verfügbar.</p>
+          <div class="nk-account-actions">
+            <a href="nordkernapp:///profile" class="nk-account-link" id="nk-open-test-app">Installierte Nordkern-Test-App öffnen</a>
+            <a href="app.html" class="nk-account-link nk-account-link-secondary">Mehr zur Nordkern-App</a>
+          </div>
+          <p class="nk-account-hint">Die App ist noch nicht öffentlich veröffentlicht. Der erste Link funktioniert nur mit einer bereits installierten Testversion. Er enthält keine Zugangsdaten.</p>
+        </section>
+        <section class="nk-account-panel" id="konto-sicherheit" aria-labelledby="nk-account-password-title">
+          <p class="eyebrow">Kontosicherheit</p>
+          <h2 id="nk-account-password-title">Passwort ändern.</h2>
+          <p>Die Änderung wird vom Nordkern-Anmeldedienst geprüft. Mindestens 12 Zeichen und Bestätigung des bisherigen Passworts.</p>
+          <form id="nk-password-change-form" autocomplete="off">
+            <label for="nk-current-password">Bisheriges Passwort</label>
+            <input type="password" id="nk-current-password" name="oldPassword"
+              autocomplete="current-password" minlength="8" required maxlength="256"/>
+            <label for="nk-new-password">Neues Passwort</label>
+            <input type="password" id="nk-new-password" name="newPassword"
+              autocomplete="new-password" minlength="12" required maxlength="256"/>
+            <label for="nk-new-password-repeat">Neues Passwort wiederholen</label>
+            <input type="password" id="nk-new-password-repeat" name="newPasswordRepeat"
+              autocomplete="new-password" minlength="12" required maxlength="256"/>
+            <button type="submit">Passwort aktualisieren</button>
+          </form>
+        </section>
+      </section>
+    </div>
+  </main>
+  <div data-footer></div>
+  <script src="js/catalog.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/shop-cart.js"></script>
+  <script src="js/product-image.js"></script>
+  <script src="js/shop.js"></script>
+  <script src="js/account-overview.js"></script>
+  <script src="js/account-records.js"></script>
+  <script src="js/account.js"></script>
+</body>
+</html>

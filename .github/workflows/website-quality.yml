@@ -34,6 +34,7 @@ jobs:
           node --check js/account.js
           node --check js/account-overview.js
           node --check js/shop.js
+          node --check js/product-image.js
           node --check js/shop-cart.js
 
       - name: Test public catalogue client

@@ -39,3 +39,7 @@
 .shop-card-controls-v3 button:disabled{opacity:.45;cursor:not-allowed}
 .shop-card-controls-v3 button:focus-visible{outline:3px solid #9bceaa;outline-offset:3px}
 @media(max-width:720px){.shop-cart-line-v3{align-items:flex-start;flex-direction:column}.shop-cart-panel-v3 .product-link{width:100%;text-align:center}}
+
+/* Managed product images have stable sizing and never stretch the card. */
+.shop-product-image-v3{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:contain;background:#f4f7f4;border-radius:16px;max-width:100%;margin-bottom:.3rem}
+.shop-product-image-v3[hidden]{display:none}

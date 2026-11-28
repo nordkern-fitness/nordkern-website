@@ -22,7 +22,8 @@
       text(value.description,5000) && ["shipping","digital_credit"].includes(value.fulfillment) && cents(value.price_cents) &&
       (value.compare_at_price_cents===null||cents(value.compare_at_price_cents)) &&
       (value.stock_quantity===null||(Number.isSafeInteger(value.stock_quantity)&&value.stock_quantity>=0)) &&
-      sort(value.sort_order) && value.published===true;
+      sort(value.sort_order) && value.published===true &&
+      (value.image_key===undefined||value.image_key===null||window.NordkernProductImage?.keyFor(value.image_key,value.id)===true);
   }
   function parseCatalogue(categories,products) {
     if (!Array.isArray(categories)||categories.length>100||!categories.every(validCategory)||
@@ -51,7 +52,7 @@
     try {
       const paths=[
         "/rest/v1/shop_categories?select=id,slug,title,sort_order,published&published=eq.true&order=sort_order.asc,id.asc&limit=101",
-        "/rest/v1/shop_products?select=id,category_id,slug,title,subtitle,description,fulfillment,price_cents,compare_at_price_cents,stock_quantity,sort_order,published&published=eq.true&order=sort_order.asc,id.asc&limit=101"
+        "/rest/v1/shop_products?select=id,category_id,slug,title,subtitle,description,fulfillment,price_cents,compare_at_price_cents,stock_quantity,sort_order,published,image_key:metadata->>nk_image&published=eq.true&order=sort_order.asc,id.asc&limit=101"
       ];
       const [categories,products]=await Promise.all(paths.map(async path=>{
         const response=await fetch(cfg.url+path,{
@@ -157,6 +158,8 @@
       for(const item of products){
         const category=catalogue.categories.find(cat=>cat.id===item.category_id);
         const card=element("article","shop-card-v3");
+        const image=window.NordkernProductImage?.createImage(document,window.NordkernCatalog?.publicConfig?.url,item);
+        if(image)card.appendChild(image);
         card.appendChild(element("span","shop-card-category-v3",category?.title??"Nordkern"));
         card.appendChild(element("h3","",item.title));
         if(item.subtitle.trim())card.appendChild(element("p","",item.subtitle));
